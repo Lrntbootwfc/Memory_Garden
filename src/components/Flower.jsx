@@ -1,18 +1,22 @@
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+// src/components/Flower.jsx
+import React from "react";
+import { MeshDistortMaterial } from "@react-three/drei";
 
-export default function Flower({ position, color }) {
-    const ref = useRef();
+const Flower = ({ position, color }) => {
+  return (
+    <group position={position}>
+      {/* Stem */}
+      <mesh>
+        <cylinderGeometry args={[0.05, 0.05, 1.5]} />
+        <meshStandardMaterial color="green" />
+      </mesh>
+      {/* Flower Head */}
+      <mesh position={[0, 0.9, 0]}>
+        <sphereGeometry args={[0.3, 32, 32]} />
+        <MeshDistortMaterial color={color} distort={0.2} speed={2} />
+      </mesh>
+    </group>
+  );
+};
 
-  // Animate slight floating
-    useFrame(() => {
-    ref.current.rotation.y += 0.005;
-    });
-
-    return (
-    <mesh ref={ref} position={position}>
-       <cylinderGeometry args={[0, 0.5, 1.5, 8]} /> {/* flower bud */}
-        <meshStandardMaterial color={color} />
-    </mesh>
-);
-}
+export default Flower;
