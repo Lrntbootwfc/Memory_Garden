@@ -23,6 +23,7 @@ function CameraTracker() {
 }
 
 function App() {
+  const isMobile = window.innerWidth <= 768;
   // State from your Zustand store
   const showSearch = useAppStore((s) => s.showSearch);
   const showMinimap = useAppStore((s) => s.showMinimap);
@@ -36,7 +37,7 @@ function App() {
   const toggleCompass = useAppStore((s) => s.toggleCompass);
 
   // Local state to track pointer lock for garden entry
-  const [lockPointer, setLockPointer] = useState(false);
+  const [isControlsLocked, setIsControlsLocked] = useState(true);
 
   // Helper function to stop event propagation on buttons
   const handleClickStop = (fn) => (e) => {
@@ -44,12 +45,23 @@ function App() {
     fn();
   };
 
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'e' || e.key === 'E') {
+        setIsControlsLocked(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className="w-screen h-screen relative">
       {/* 🎨 3D Canvas - This is your main view */}
       <Canvas shadows camera={{ position: [0, 10, 25], fov: 60 }} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 0 }}>
         <Suspense fallback={null}>
-          <GardenScene lockPointer={lockPointer} />
+          <GardenScene isControlsLocked={isControlsLocked} setIsControlsLocked={setIsControlsLocked} />
           <CameraTracker />
         </Suspense>
       </Canvas>
@@ -97,7 +109,8 @@ function App() {
             const canvas = document.querySelector("canvas");
             if (canvas) {
               canvas.requestPointerLock();
-              setLockPointer(true);
+              // CHANGED: isControlsLocked ko true set kiya
+              setIsControlsLocked(true);
             }
           }}
         >
@@ -109,6 +122,12 @@ function App() {
       {showMinimap && <MiniMapDrawer onClose={toggleMinimap} cameraPos={cameraPos} />}
       {showSearch && <SearchDrawer onClose={toggleSearch} />}
       {showCompass && <CompassDrawer rotation={(cameraRot * 180) / Math.PI} />}
+    
+      {/* NEW: Instructions for controls */}
+      <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 100, color: 'white', fontSize: '1.2rem', backgroundColor: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '5px', textAlign: 'center' }}>
+          {isControlsLocked ? "Controls Locked. Press 'E' to unlock and click flowers." : "Controls Unlocked. Click on a flower or press 'E' to lock again."}
+      </div>
+
     </div>
   );
 }

@@ -10,7 +10,8 @@ const Flower = ({
   targetHeight = 1.5,
   autoBloom = false,// true -> bloom automatically
   memoryTexturePath = null, 
-  onClick
+  onClick,
+  hasMemory = false
 }) => {
   
   const { scene } = useGLTF(modelPath);
@@ -22,6 +23,10 @@ const Flower = ({
   const memoryTexture = memoryTexturePath ? useTexture(memoryTexturePath) : null;
   
   const { normalizedScene, yOffset } = useMemo(() => {
+    if (!scene) {
+      return { normalizedScene: null, yOffset: 0 };
+    }
+    
     const clone = scene.clone(true);
 
     // Compute bounding box
@@ -64,6 +69,11 @@ const Flower = ({
       setScale((prev) => Math.min(prev + delta * 2, 1));
     }
   });
+  if (!normalizedScene) {
+    return null; //no scene loaded
+  }
+  const flowerMesh = normalizedScene.children.find(child => child instanceof THREE.Mesh);
+  const glowGeometry = flowerMesh ? flowerMesh.geometry.clone() : null;
 
   return (
     <group
@@ -86,6 +96,20 @@ const Flower = ({
           />
         </mesh>
       )}
+
+      {hasMemory && glowGeometry && (
+        <mesh geometry={glowGeometry}>
+          <meshBasicMaterial
+            color="#FFD700"
+            transparent
+            opacity={0.6}
+            toneMapped={false}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
+
+
     </group>
 
   );

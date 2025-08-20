@@ -57,21 +57,28 @@ const generateLotusFlowers = () => {
     return lotusFlowers;
 };
 
-function PlayerControls({ lockPointer }) {
+function PlayerControls({ isLocked, setIsLocked}) {
     const { camera, gl } = useThree();
     const controlsRef = useRef();
     const velocity = useRef(new THREE.Vector3());
     const direction = new THREE.Vector3();
     const keys = useRef({});
-    const [isLocked, setIsLocked] = useState(false);
+    // const [isLocked, setIsLocked] = useState(false);
 
+    useEffect(() => {
+    
+        if (!isLocked) {
+            document.exitPointerLock();
+        }
+    }, [isLocked]); 
+    
     useEffect(() => {
         const handleLockChange = () => {
             setIsLocked(document.pointerLockElement === gl.domElement);
         };
         document.addEventListener("pointerlockchange", handleLockChange);
         return () => document.removeEventListener("pointerlockchange", handleLockChange);
-    }, [gl.domElement]);
+    }, [gl.domElement, setIsLocked]);
 
 
     useEffect(() => {
@@ -124,8 +131,12 @@ function PlayerControls({ lockPointer }) {
 
 
     useFrame((_, delta) => {
-        if (!controlsRef.current || !controlsRef.current.isLocked) return;
+        // if (!controlsRef.current || !controlsRef.current.isLocked) return;
+        // if (!isLocked) return;
 
+        if (!controlsRef.current || !isLocked) {
+            return;
+        }
         direction.set(0, 0, 0);
         if (!isMobile) {
             if (keys.current["KeyW"]) direction.z -= 1;
@@ -141,14 +152,15 @@ function PlayerControls({ lockPointer }) {
         direction.normalize();
 
         const speed = 10;
+        velocity.current.copy(direction).multiplyScalar(speed * delta);
         controlsRef.current.moveRight(velocity.current.x);
         controlsRef.current.moveForward(velocity.current.z);
-        camera.position.y += velocity.current.y;
+        // camera.position.y += velocity.current.y;
 
-        velocity.current.copy(direction).multiplyScalar(speed * delta);
+        
     });
 
-    return <PointerLockControls ref={controlsRef} args={[camera, gl.domElement]} />;
+    return  isLocked ? <PointerLockControls ref={controlsRef} args={[camera, gl.domElement]} />: <OrbitControls />;
 }
 
 const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
@@ -174,8 +186,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
                     scale: model.scale,
                     bloomed: count < 50,
                     date: `2025-08-${(row + 1).toString().padStart(2, '0')}`,
-                    // NEW: Yahan har flower ke liye memory data add kiya gaya hai.
-                    // Aap yahan apni images/videos use kar sakte hain.
+                    
                     memory: {
                         type: count % 2 === 0 ? 'image' : 'video',
                         source: count % 2 === 0 ? '/memories/test_image.jpg' : '/memories/test_video.mp4',
@@ -187,16 +198,18 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
         return arr;
     }, []);
 
-    // CHANGED: Ab hum flowers array DUMMY_FLOWERS_DATA se bana rahe hain.
+    //  Ab hum flowers array DUMMY_FLOWERS_DATA se bana rahe hain.
     const [flowers, setFlowers] = useState(DUMMY_FLOWERS_DATA);
 
-    // NEW: selectedFlower state banaya hai, jo clicked flower ko track karega.
+    // selectedFlower state banaya hai, jo clicked flower ko track karega.
     const [selectedFlower, setSelectedFlower] = useState(null);
+    const [isControlsLocked, setIsControlsLocked] = useState(true);
 
     // NEW: Yeh function flower click hone par chalta hai.
     const handleFlowerClick = (flower) => {
         console.log("Flower clicked:", flower);
         setSelectedFlower(flower);
+        setIsControlsLocked(false);
     };
 
     // NEW: Hologram ko band karne ke liye function.
@@ -271,6 +284,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
                             // NEW: onClick prop pass kar rahe hain.
                             // onFlowerClick function ke andar flower data bheja ja raha hai.
                             onClick={() => handleFlowerClick(flower)}
+                            hasMemory={!!flower.memory}
                         />
                     ))}
 
@@ -295,7 +309,10 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
 
             <Sky sunPosition={[100, 20, 100]} />
             <Environment preset="sunset" />
-            <PlayerControls />
+            <PlayerControls 
+            isLocked={isControlsLocked} 
+            setIsLocked={setIsControlsLocked} 
+            />
         </>
     );
 };

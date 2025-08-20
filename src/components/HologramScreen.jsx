@@ -1,30 +1,24 @@
 // src/components/HologramScreen.jsx
 
 import React from 'react';
-import { useTexture, useVideoTexture } from "@react-three/drei";
+import ImageMemory from './ImageMemory'; // New Import
+import VideoMemory from './VideoMemory'; // New Import
 
 const HologramScreen = ({ position, memoryData, onClose }) => {
-    // NEW: Ab hum memory type ke hisab se texture load karenge.
-    let texture;
-    let video;
+    const screenPosition = [position[0], 2.5, position[2]];
 
-    if (memoryData.type === 'image') {
-        texture = useTexture(memoryData.source);
-    } else if (memoryData.type === 'video') {
-        // video texture ke liye useVideoTexture use hota hai.
-        video = useVideoTexture(memoryData.source);
-        texture = video;
+    let memoryComponent = null;
+
+    if (memoryData.type === 'image' && memoryData.source) {
+        memoryComponent = <ImageMemory src={memoryData.source} />;
+    } else if (memoryData.type === 'video' && memoryData.source) {
+        memoryComponent = <VideoMemory src={memoryData.source} />;
     } else {
-        // Agar koi valid type nahi hai, to null return karo.
+        // Agar data missing hai, to component render hi na ho
         return null;
     }
 
-    // Position ko flower ke upar set karte hain (y-axis mein upar).
-    const screenPosition = [position[0], 2.5, position[2]];
-
     return (
-        // onPointerDown se click ya tap event handle hota hai.
-        // onClose prop ko call karke hologram ko band karte hain.
         <mesh
             position={screenPosition}
             onClick={(e) => {
@@ -33,11 +27,8 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
             }}
         >
             <planeGeometry args={[2, 1.2]} />
-            <meshBasicMaterial
-                map={texture}
-                transparent
-                opacity={0.8}
-            />
+            {/* Ab yahan hum memoryComponent ko render karenge */}
+            {memoryComponent}
         </mesh>
     );
 };
