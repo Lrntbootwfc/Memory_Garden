@@ -7,6 +7,8 @@ import Flower from "./Flower";
 import nipplejs from "nipplejs";
 import { isMobile } from "react-device-detect";
 import InfiniteGround from "./InfiniteGround";
+import DisplayCard from "./DisplayCard";
+import { createClusters } from "../utils/clusterUtils";
 
 import GardenControls from "./GardenControls";
 
@@ -117,7 +119,7 @@ function PlayerControls({ lockPointer }) {
         return () => joystickZone.remove();
     }, []);
 
-    
+
 
 
     useFrame((_, delta) => {
@@ -140,7 +142,7 @@ function PlayerControls({ lockPointer }) {
         const speed = 10;
         // velocity.current.x = direction.x * speed * delta;
         // velocity.current.z = direction.z * speed * delta;
-        
+
         controlsRef.current.moveRight(velocity.current.x);
         controlsRef.current.moveForward(velocity.current.z);
         camera.position.y += velocity.current.y;
@@ -176,10 +178,12 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
                     modelPath: model.path,
                     scale: model.scale,
                     bloomed: count < 50, // first 50 are pre-bloomed
+                    date: `2025-08-${(row + 1).toString().padStart(2, '0')}`,
                 });
                 count++;
             }
         }
+        console.log("Flowers array created with", arr.length, "items.");
         return arr;
     });
     const [scaled, setScaled] = useState({});
@@ -209,6 +213,10 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
     useEffect(() => {
         scene.fog = new THREE.FogExp2("#87CEEB", 0.0008);
     }, [scene]);
+    const clusters = useMemo(() => createClusters(flowers, "date"), [flowers]);
+
+    console.log("Clusters array created with", clusters.length, "clusters.");
+    console.log("Clusters data:", clusters);
 
     return (
         <>
@@ -234,7 +242,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
                 />
             ))}
 
-            {/* Aligned Flower Rows */}
+            {/* Aligned Flower Rows
             {flowers.map((flower) => (
                 <Flower
                     key={flower.id}
@@ -243,6 +251,31 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
                     targetHeight={flower.scale}
                     autoBloom={flower.bloomed}
                 />
+            ))} */}
+
+
+            {clusters.map((cluster, idx) => (
+                <React.Fragment key={`cluster-${idx}`}>
+                    {/* Flowers in cluster */}
+                    {cluster.flowers.map((flower, fIdx) => (
+                        <Flower
+                            key={`flower-${idx}-${fIdx}`}
+                            position={flower.position}
+                            modelPath={flower.modelPath}
+                            targetHeight={flower.scale}
+                            autoBloom={flower.bloomed}
+                        />
+                    ))}
+
+                    {/* Display card tied to this cluster */}
+                    <DisplayCard
+                        clusterPosition={cluster.centerPosition} // fixed
+                        clusterSize={cluster.size}              // for offset
+                        date={cluster.date}
+                        emotion={cluster.emotion}               // NEW: pass emotion
+                        gradientColors={["#f5e6c8", "#d9b382"]} // creamy-wood
+                    />
+                </React.Fragment>
             ))}
 
             <Sky sunPosition={[100, 20, 100]} />
