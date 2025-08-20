@@ -1,4 +1,5 @@
 // src/components/GardenScene.jsx
+
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import { PointerLockControls, OrbitControls, Environment, Sky, useTexture, Html } from "@react-three/drei";
 import * as THREE from "three";
@@ -9,8 +10,11 @@ import { isMobile } from "react-device-detect";
 import InfiniteGround from "./InfiniteGround";
 import DisplayCard from "./DisplayCard";
 import { createClusters } from "../utils/clusterUtils";
-
+import Cluster from "./Cluster";
 import GardenControls from "./GardenControls";
+// NEW: Ab hum HologramScreen component import kar rahe hain.
+import HologramScreen from "./HologramScreen";
+
 
 // 🌸 Flower models
 const flowerModels = [
@@ -30,11 +34,11 @@ const gardenSize = 50;
 const spacing = 2.0;
 
 // 🌸 NEW: Grid settings for flower rows
-const ROWS = 11;        // generate this many rows at once
-const COLS = 10;        // flowers per row
-const SPACING_X = 3;    // horizontal spacing
-const SPACING_Z = 4;    // row spacing
-const BLOOM_DISTANCE = 50; // proximity bloom distance
+const ROWS = 11;
+const COLS = 10;
+const SPACING_X = 3;
+const SPACING_Z = 4;
+const BLOOM_DISTANCE = 50;
 
 const keyForCell = (x, z) => `${x}|${z}`;
 const generateLotusFlowers = () => {
@@ -55,7 +59,6 @@ const generateLotusFlowers = () => {
 
 function PlayerControls({ lockPointer }) {
     const { camera, gl } = useThree();
-    // const [lockPointer, setLockPointer] = useState(false);
     const controlsRef = useRef();
     const velocity = useRef(new THREE.Vector3());
     const direction = new THREE.Vector3();
@@ -120,8 +123,6 @@ function PlayerControls({ lockPointer }) {
     }, []);
 
 
-
-
     useFrame((_, delta) => {
         if (!controlsRef.current || !controlsRef.current.isLocked) return;
 
@@ -140,17 +141,12 @@ function PlayerControls({ lockPointer }) {
         direction.normalize();
 
         const speed = 10;
-        // velocity.current.x = direction.x * speed * delta;
-        // velocity.current.z = direction.z * speed * delta;
-
         controlsRef.current.moveRight(velocity.current.x);
         controlsRef.current.moveForward(velocity.current.z);
         camera.position.y += velocity.current.y;
 
         velocity.current.copy(direction).multiplyScalar(speed * delta);
-        // camera.position.add(velocity.current);
     });
-    // return <OrbitControls enablePan enableZoom enableRotate />;
 
     return <PointerLockControls ref={controlsRef} args={[camera, gl.domElement]} />;
 }
@@ -160,15 +156,14 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
     const grassTexture = useTexture(grassTexturePath);
     grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
     grassTexture.repeat.set(10, 10);
-
     const lotusFlowers = useMemo(() => generateLotusFlowers(), []);
 
-    // 🌸 NEW: generate grid-based flowers
-    const [flowers, setFlowers] = useState(() => {
+    // NEW: Dummy data jismein memory information hai.
+    const DUMMY_FLOWERS_DATA = useMemo(() => {
         const arr = [];
         let count = 0;
         for (let row = 0; row < ROWS; row++) {
-            const model = flowerModels[row % flowerModels.length]; // one type per row
+            const model = flowerModels[row % flowerModels.length];
             for (let col = 0; col < COLS; col++) {
                 const x = col * SPACING_X;
                 const z = row * SPACING_Z;
@@ -177,17 +172,40 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
                     position: [x, 0, -z],
                     modelPath: model.path,
                     scale: model.scale,
-                    bloomed: count < 50, // first 50 are pre-bloomed
+                    bloomed: count < 50,
                     date: `2025-08-${(row + 1).toString().padStart(2, '0')}`,
+                    // NEW: Yahan har flower ke liye memory data add kiya gaya hai.
+                    // Aap yahan apni images/videos use kar sakte hain.
+                    memory: {
+                        type: count % 2 === 0 ? 'image' : 'video',
+                        source: count % 2 === 0 ? '/memories/test_image.jpg' : '/memories/test_video.mp4',
+                    }
                 });
                 count++;
             }
         }
-        console.log("Flowers array created with", arr.length, "items.");
         return arr;
-    });
+    }, []);
+
+    // CHANGED: Ab hum flowers array DUMMY_FLOWERS_DATA se bana rahe hain.
+    const [flowers, setFlowers] = useState(DUMMY_FLOWERS_DATA);
+
+    // NEW: selectedFlower state banaya hai, jo clicked flower ko track karega.
+    const [selectedFlower, setSelectedFlower] = useState(null);
+
+    // NEW: Yeh function flower click hone par chalta hai.
+    const handleFlowerClick = (flower) => {
+        console.log("Flower clicked:", flower);
+        setSelectedFlower(flower);
+    };
+
+    // NEW: Hologram ko band karne ke liye function.
+    const handleHologramClose = () => {
+        setSelectedFlower(null);
+    };
+
     const [scaled, setScaled] = useState({});
-    // 🌸 NEW: Proximity-based bloom for flowers
+
     useFrame(() => {
         const newScaled = {};
         flowers.forEach((flower, idx) => {
@@ -209,11 +227,12 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
         setScaled(newScaled);
     });
 
-    // 🌫️ Fog for horizon smoothing
     useEffect(() => {
         scene.fog = new THREE.FogExp2("#87CEEB", 0.0008);
     }, [scene]);
-    const clusters = useMemo(() => createClusters(flowers, "date"), [flowers]);
+
+    // CHANGED: Clusters DUMMY_FLOWERS_DATA se banaye ja rahe hain.
+    const clusters = useMemo(() => createClusters(DUMMY_FLOWERS_DATA, "date"), []);
 
     console.log("Clusters array created with", clusters.length, "clusters.");
     console.log("Clusters data:", clusters);
@@ -223,15 +242,13 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 20]} intensity={1.2} castShadow />
 
-            {/* <InfiniteGround grassTexture={grassTexture} /> */}
+            <InfiniteGround grassTexture={grassTexture} />
 
-            {/* Pond */}
             <mesh position={[15, 0, 15]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
                 <circleGeometry args={[4, 64]} />
                 <meshStandardMaterial color="#4DA6FF" transparent opacity={0.5} roughness={0.2} metalness={0.1} />
             </mesh>
 
-            {/* Lotus Flowers */}
             {lotusFlowers.map((flower, idx) => (
                 <Flower
                     key={`lotus-${idx}`}
@@ -242,21 +259,8 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
                 />
             ))}
 
-            {/* Aligned Flower Rows
-            {flowers.map((flower) => (
-                <Flower
-                    key={flower.id}
-                    position={flower.position}
-                    modelPath={flower.modelPath}
-                    targetHeight={flower.scale}
-                    autoBloom={flower.bloomed}
-                />
-            ))} */}
-
-
             {clusters.map((cluster, idx) => (
                 <React.Fragment key={`cluster-${idx}`}>
-                    {/* Flowers in cluster */}
                     {cluster.flowers.map((flower, fIdx) => (
                         <Flower
                             key={`flower-${idx}-${fIdx}`}
@@ -264,27 +268,34 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
                             modelPath={flower.modelPath}
                             targetHeight={flower.scale}
                             autoBloom={flower.bloomed}
+                            // NEW: onClick prop pass kar rahe hain.
+                            // onFlowerClick function ke andar flower data bheja ja raha hai.
+                            onClick={() => handleFlowerClick(flower)}
                         />
                     ))}
 
-                    {/* Display card tied to this cluster */}
                     <DisplayCard
-                        clusterPosition={cluster.centerPosition} // fixed
-                        clusterSize={cluster.size}              // for offset
+                        clusterPosition={cluster.centerPosition}
+                        clusterSize={cluster.size}
                         date={cluster.date}
-                        emotion={cluster.emotion}               // NEW: pass emotion
-                        gradientColors={["#f5e6c8", "#d9b382"]} // creamy-wood
+                        emotion={cluster.emotion}
+                        gradientColors={["#f5e6c8", "#d9b382"]}
                     />
                 </React.Fragment>
             ))}
 
+            {/* NEW: Agar koi flower selected hai, to HologramScreen render karo */}
+            {selectedFlower && (
+                <HologramScreen
+                    position={selectedFlower.position}
+                    memoryData={selectedFlower.memory}
+                    onClose={handleHologramClose}
+                />
+            )}
+
             <Sky sunPosition={[100, 20, 100]} />
             <Environment preset="sunset" />
-
             <PlayerControls />
-            {/* <GardenControls /> */}
-            {/* UI Overlays */}
-
         </>
     );
 };

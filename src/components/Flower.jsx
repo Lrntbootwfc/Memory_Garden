@@ -10,6 +10,7 @@ const Flower = ({
   targetHeight = 1.5,
   autoBloom = false,// true -> bloom automatically
   memoryTexturePath = null, 
+  onClick
 }) => {
   
   const { scene } = useGLTF(modelPath);
@@ -43,6 +44,20 @@ const Flower = ({
     return { normalizedScene: clone, yOffset };
   }, [scene, targetHeight]);
 
+
+  const handleFlowerClick = (e) => {
+    // Stop the event propagation so it doesn't affect other elements
+    e.stopPropagation();
+
+    // Call the local bloom function first
+    setBlooming(true);
+
+    // Then, if the onClick prop exists, call it.
+    if (onClick) {
+      onClick();
+    }
+  };
+
   // Bloom animation
   useFrame((_, delta) => {
     if (blooming && scale < 1) {
@@ -55,7 +70,7 @@ const Flower = ({
       ref={flowerRef}
       position={[position[0], position[1] + yOffset, position[2]]}
       scale={[scale, scale, scale]}
-      onClick={() => setBlooming(true)}
+      onClick={handleFlowerClick}
     >
       <primitive object={normalizedScene} />
       {/* Blended memory aura */}
