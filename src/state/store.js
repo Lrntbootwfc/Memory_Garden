@@ -28,4 +28,10 @@ export const useAppStore = create((set) => ({
     toggleUpload: () => set((s) => ({ showUpload: !s.showUpload })),
     toggleMinimap: () => set((s) => ({ showMinimap: !s.showMinimap })),
     toggleCompass: () => set((s) => ({ showCompass: !s.showCompass })),
+
+    cameraPos: [0, 0, 0],  // x, y, z
+    cameraRot: 0,          // rotation around Y in radians
+    setCameraPos: (pos) => set({ cameraPos: pos }),
+    setCameraRot: (rot) => set({ cameraRot: rot }),
+
 }))

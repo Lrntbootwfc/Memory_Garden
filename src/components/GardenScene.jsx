@@ -51,13 +51,22 @@ const generateLotusFlowers = () => {
     return lotusFlowers;
 };
 
-function PlayerControls() {
+function PlayerControls({ lockPointer }) {
     const { camera, gl } = useThree();
-    const [lockPointer, setLockPointer] = useState(false);
+    // const [lockPointer, setLockPointer] = useState(false);
     const controlsRef = useRef();
     const velocity = useRef(new THREE.Vector3());
     const direction = new THREE.Vector3();
     const keys = useRef({});
+    const [isLocked, setIsLocked] = useState(false);
+
+    useEffect(() => {
+        const handleLockChange = () => {
+            setIsLocked(document.pointerLockElement === gl.domElement);
+        };
+        document.addEventListener("pointerlockchange", handleLockChange);
+        return () => document.removeEventListener("pointerlockchange", handleLockChange);
+    }, [gl.domElement]);
 
 
     useEffect(() => {
@@ -108,8 +117,11 @@ function PlayerControls() {
         return () => joystickZone.remove();
     }, []);
 
+    
+
+
     useFrame((_, delta) => {
-        if (!lockPointer) return; 
+        if (!controlsRef.current || !controlsRef.current.isLocked) return;
 
         direction.set(0, 0, 0);
         if (!isMobile) {
@@ -128,12 +140,13 @@ function PlayerControls() {
         const speed = 10;
         // velocity.current.x = direction.x * speed * delta;
         // velocity.current.z = direction.z * speed * delta;
-
-        // controlsRef.current.moveRight(velocity.current.x);
-        // controlsRef.current.moveForward(velocity.current.z);
+        
+        controlsRef.current.moveRight(velocity.current.x);
+        controlsRef.current.moveForward(velocity.current.z);
+        camera.position.y += velocity.current.y;
 
         velocity.current.copy(direction).multiplyScalar(speed * delta);
-        camera.position.add(velocity.current);
+        // camera.position.add(velocity.current);
     });
     // return <OrbitControls enablePan enableZoom enableRotate />;
 
@@ -188,7 +201,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
                     newScaled[flower.id] = 0.3;
                 }
             }
-            });
+        });
         setScaled(newScaled);
     });
 
@@ -238,7 +251,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
             <PlayerControls />
             {/* <GardenControls /> */}
             {/* UI Overlays */}
-            
+
         </>
     );
 };
