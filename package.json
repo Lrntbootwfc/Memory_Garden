@@ -10,14 +10,21 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-spring/core": "^10.0.1",
+    "@react-spring/three": "^10.0.1",
     "@react-three/drei": "^10.7.3",
     "@react-three/fiber": "^9.3.0",
     "@tailwindcss/vite": "^4.1.12",
+    "framer-motion": "^12.23.12",
+    "lucide-react": "^0.540.0",
+    "nipplejs": "^0.10.2",
     "react": "^19.1.1",
+    "react-device-detect": "^2.2.3",
     "react-dom": "^19.1.1",
     "tailwindcss": "^4.1.12",
     "three": "^0.179.1",
-    "three-stdlib": "^2.36.0"
+    "three-stdlib": "^2.36.0",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

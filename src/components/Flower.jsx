@@ -1,12 +1,25 @@
 // src/components/Flower.jsx
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-const Flower = ({ position = [0, 0, 0], modelPath, targetHeight = 1.5 }) => {
+const Flower = ({
+  position = [0, 0, 0],
+  modelPath,
+  targetHeight = 1.5,
+  autoBloom = false,// true -> bloom automatically
+  memoryTexturePath = null, 
+}) => {
+  
   const { scene } = useGLTF(modelPath);
+  const flowerRef = useRef();
+  const [blooming, setBlooming] = useState(autoBloom);
+  const [scale, setScale] = useState(autoBloom ? 1 : 0.2);
 
-  // Compute normalization once
+  // Normalize and align flower model
+  const memoryTexture = memoryTexturePath ? useTexture(memoryTexturePath) : null;
+  
   const { normalizedScene, yOffset } = useMemo(() => {
     const clone = scene.clone(true);
 
@@ -24,23 +37,47 @@ const Flower = ({ position = [0, 0, 0], modelPath, targetHeight = 1.5 }) => {
     const newSize = new THREE.Vector3();
     newBox.getSize(newSize);
 
-    // Compute bottom Y so model sits on ground
+    // Compute offset so base sits on ground
     const yOffset = -newBox.min.y;
 
     return { normalizedScene: clone, yOffset };
   }, [scene, targetHeight]);
 
+  // Bloom animation
+  useFrame((_, delta) => {
+    if (blooming && scale < 1) {
+      setScale((prev) => Math.min(prev + delta * 2, 1));
+    }
+  });
+
   return (
-    <primitive
-      object={normalizedScene}
+    <group
+      ref={flowerRef}
       position={[position[0], position[1] + yOffset, position[2]]}
-    />
+      scale={[scale, scale, scale]}
+      onClick={() => setBlooming(true)}
+    >
+      <primitive object={normalizedScene} />
+      {/* Blended memory aura */}
+      {memoryTexture && (
+        <mesh position={[0, targetHeight * 1.2, 0]}>
+          <planeGeometry args={[1.2, 1.2]} />
+          <meshBasicMaterial
+            map={memoryTexture}
+            transparent
+            opacity={0.35} // faint blending
+            side={THREE.DoubleSide}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
+    </group>
+
   );
 };
 
-// Optional: Preload some models for smoother first load
+// Optional preloading for smoother experience
 useGLTF.preload("/models/rose.glb");
-useGLTF.preload("/models/tulip_flower.glb");
 useGLTF.preload("/models/orchid_flower.glb");
 
 export default Flower;
