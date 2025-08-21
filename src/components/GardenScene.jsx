@@ -57,7 +57,7 @@ const generateLotusFlowers = () => {
     return lotusFlowers;
 };
 
-function PlayerControls({ isLocked, setIsLocked}) {
+function PlayerControls({ isLocked, setIsLocked }) {
     const { camera, gl } = useThree();
     const controlsRef = useRef();
     const velocity = useRef(new THREE.Vector3());
@@ -66,12 +66,12 @@ function PlayerControls({ isLocked, setIsLocked}) {
     // const [isLocked, setIsLocked] = useState(false);
 
     useEffect(() => {
-    
+
         if (!isLocked) {
             document.exitPointerLock();
         }
-    }, [isLocked]); 
-    
+    }, [isLocked]);
+
     useEffect(() => {
         const handleLockChange = () => {
             setIsLocked(document.pointerLockElement === gl.domElement);
@@ -157,98 +157,75 @@ function PlayerControls({ isLocked, setIsLocked}) {
         controlsRef.current.moveForward(velocity.current.z);
         // camera.position.y += velocity.current.y;
 
-        
+
     });
 
-    return  isLocked ? <PointerLockControls ref={controlsRef} args={[camera, gl.domElement]} />: <OrbitControls />;
+    return isLocked ? <PointerLockControls ref={controlsRef} args={[camera, gl.domElement]} /> : <OrbitControls />;
 }
 
-const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
+const params = new URLSearchParams(window.location.search);
+const API_BASE = params.get("api_base") || window.memoryscape_api_base || "http://127.0.0.1:8000/api";
+const API_ENDPOINT = `${API_BASE}/memories`;
+const PARAM_USER_ID = params.get("user_id");
+const RUNTIME_USER_ID = window.memoryscape_user_id;
+const FALLBACK_USER_ID = 2; // optional
+
+const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLocked, setIsControlsLocked }) => {
+    const [flowers, setFlowers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     const { camera, scene } = useThree();
-    const grassTexture = useTexture(grassTexturePath);
+    const grassTexture = useTexture("/textures/grass.jpeg");
     grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
     grassTexture.repeat.set(10, 10);
     const lotusFlowers = useMemo(() => generateLotusFlowers(), []);
 
-    // NEW: Dummy data jismein memory information hai.
-    const DUMMY_FLOWERS_DATA = useMemo(() => {
-        const arr = [];
-        let count = 0;
-        for (let row = 0; row < ROWS; row++) {
-            const model = flowerModels[row % flowerModels.length];
-            for (let col = 0; col < COLS; col++) {
-                const x = col * SPACING_X;
-                const z = row * SPACING_Z;
-                arr.push({
-                    id: `row-${row}-${col}`,
-                    position: [x, 0, -z],
-                    modelPath: model.path,
-                    scale: model.scale,
-                    bloomed: count < 50,
-                    date: `2025-08-${(row + 1).toString().padStart(2, '0')}`,
-                    
-                    memory: {
-                        type: count % 2 === 0 ? 'image' : 'video',
-                        source: count % 2 === 0 ? '/memories/test_image.jpg' : '/memories/test_video.mp4',
-                    }
-                });
-                count++;
+    useEffect(() => {
+        const fetchFlowers = async () => {
+            try {
+                const userId = PARAM_USER_ID || RUNTIME_USER_ID || FALLBACK_USER_ID;
+                if (!userId) {
+                    setLoading(false);
+                    return;
+                }
+                const response = await fetch(`${API_ENDPOINT}?user_id=${userId}`);
+                if (!response.ok) throw new Error("Network response was not ok");
+                const data = await response.json();
+                setFlowers(data);
+            } catch (error) {
+                console.error("Failed to fetch flowers:", error);
+            } finally {
+                setLoading(false);
             }
-        }
-        return arr;
-    }, []);
+        };
+        fetchFlowers();
+    }, []); // Empty dependency array means this runs only once on mount
 
-    //  Ab hum flowers array DUMMY_FLOWERS_DATA se bana rahe hain.
-    const [flowers, setFlowers] = useState(DUMMY_FLOWERS_DATA);
-
-    // selectedFlower state banaya hai, jo clicked flower ko track karega.
+    const clusters = useMemo(() => createClusters(flowers, "date"), [flowers]);
     const [selectedFlower, setSelectedFlower] = useState(null);
-    const [isControlsLocked, setIsControlsLocked] = useState(true);
 
-    // NEW: Yeh function flower click hone par chalta hai.
     const handleFlowerClick = (flower) => {
         console.log("Flower clicked:", flower);
         setSelectedFlower(flower);
         setIsControlsLocked(false);
     };
 
-    // NEW: Hologram ko band karne ke liye function.
     const handleHologramClose = () => {
         setSelectedFlower(null);
     };
 
-    const [scaled, setScaled] = useState({});
-
     useFrame(() => {
-        const newScaled = {};
-        flowers.forEach((flower, idx) => {
-            if (!flower.bloomed) {
-                const dx = flower.position[0] - camera.position.x;
-                const dz = flower.position[2] - camera.position.z;
-                const dist = Math.sqrt(dx * dx + dz * dz);
-                if (dist < BLOOM_DISTANCE) {
-                    newScaled[flower.id] = THREE.MathUtils.lerp(
-                        0.3,
-                        flower.baseScale,
-                        1 - dist / BLOOM_DISTANCE
-                    );
-                } else {
-                    newScaled[flower.id] = 0.3;
-                }
-            }
-        });
-        setScaled(newScaled);
+
     });
 
     useEffect(() => {
         scene.fog = new THREE.FogExp2("#87CEEB", 0.0008);
     }, [scene]);
 
-    // CHANGED: Clusters DUMMY_FLOWERS_DATA se banaye ja rahe hain.
-    const clusters = useMemo(() => createClusters(DUMMY_FLOWERS_DATA, "date"), []);
-
-    console.log("Clusters array created with", clusters.length, "clusters.");
-    console.log("Clusters data:", clusters);
+    const getFlowerModelPath = (emotion) => {
+        const modelIndex = emotion ? (emotion.length % flowerModels.length) : 0;
+        return flowerModels[modelIndex].path;
+    };
 
     return (
         <>
@@ -269,36 +246,45 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
                     modelPath={flower.modelPath}
                     targetHeight={flower.scale}
                     autoBloom={true}
+                    hasMemory={false}
                 />
             ))}
 
-            {clusters.map((cluster, idx) => (
-                <React.Fragment key={`cluster-${idx}`}>
-                    {cluster.flowers.map((flower, fIdx) => (
-                        <Flower
-                            key={`flower-${idx}-${fIdx}`}
-                            position={flower.position}
-                            modelPath={flower.modelPath}
-                            targetHeight={flower.scale}
-                            autoBloom={flower.bloomed}
-                            // NEW: onClick prop pass kar rahe hain.
-                            // onFlowerClick function ke andar flower data bheja ja raha hai.
-                            onClick={() => handleFlowerClick(flower)}
-                            hasMemory={!!flower.memory}
+            {loading ? (
+                <Html center>
+                    <div style={{ color: 'white' }}>Loading memories...</div>
+                </Html>
+            ) : (
+                clusters.map((cluster, idx) => (
+                    <React.Fragment key={`cluster-${idx}`}>
+                        {cluster.flowers.map((flower, fIdx) => (
+                            <Flower
+                                key={`flower-${idx}-${fIdx}`}
+                                // NEW: position ko seedhe database se use karo
+                                position={flower.position}
+                                // NEW: modelPath ko seedhe database se use karo
+                                // modelPath={flowerModels[fIdx % flowerModels.length].path}
+                                modelPath={getFlowerModelPath(flower.emotion)}
+                                // NEW: targetHeight ko seedhe database se use karo
+                                targetHeight={1.5}
+                                // autoBloom={flower.bloomed}
+                                autoBloom={true}
+                                onClick={() => handleFlowerClick(flower)}
+                                hasMemory={!!flower.memory}
+                            />
+                        ))}
+
+                        <DisplayCard
+                            clusterPosition={cluster.centerPosition}
+                            clusterSize={cluster.size}
+                            date={cluster.date}
+                            emotion={cluster.emotion}
+                            gradientColors={["#f5e6c8", "#d9b382"]}
                         />
-                    ))}
+                    </React.Fragment>
+                ))
+            )}
 
-                    <DisplayCard
-                        clusterPosition={cluster.centerPosition}
-                        clusterSize={cluster.size}
-                        date={cluster.date}
-                        emotion={cluster.emotion}
-                        gradientColors={["#f5e6c8", "#d9b382"]}
-                    />
-                </React.Fragment>
-            ))}
-
-            {/* NEW: Agar koi flower selected hai, to HologramScreen render karo */}
             {selectedFlower && (
                 <HologramScreen
                     position={selectedFlower.position}
@@ -309,9 +295,9 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
 
             <Sky sunPosition={[100, 20, 100]} />
             <Environment preset="sunset" />
-            <PlayerControls 
-            isLocked={isControlsLocked} 
-            setIsLocked={setIsControlsLocked} 
+            <PlayerControls
+                isLocked={isControlsLocked}
+                setIsLocked={setIsControlsLocked}
             />
         </>
     );

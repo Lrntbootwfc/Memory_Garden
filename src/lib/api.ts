@@ -1,5 +1,5 @@
 // frontend/src/lib/api.ts
-const BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8001";
+const BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 console.log(import.meta.env);
 
 export type Memory = {

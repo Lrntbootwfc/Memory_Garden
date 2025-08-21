@@ -465,3 +465,6 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg" }) => {
 };
 
 export default GardenScene;
+
+
+http://localhost:5173/?user_id=1&api_base=http://127.0.0.1:8000/api
