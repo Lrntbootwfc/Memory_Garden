@@ -206,6 +206,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
 
     const handleFlowerClick = (flower) => {
         console.log("Flower clicked:", flower);
+        console.log("Passing this to Hologram:", flower.memory);
         setSelectedFlower(flower);
         setIsControlsLocked(false);
     };
@@ -285,10 +286,16 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
                 ))
             )}
 
-            {selectedFlower && (
+            {selectedFlower &&  selectedFlower.media_path &&(
                 <HologramScreen
                     position={selectedFlower.position}
                     memoryData={selectedFlower.memory}
+        //             memoryData={{ 
+        //                 type: selectedFlower.media_type, 
+        //                 source: selectedFlower.media_path 
+        // }}
+
+
                     onClose={handleHologramClose}
                 />
             )}

@@ -5,6 +5,10 @@ import ImageMemory from './ImageMemory'; // New Import
 import VideoMemory from './VideoMemory'; // New Import
 
 const HologramScreen = ({ position, memoryData, onClose }) => {
+    if (!memoryData || !position) {
+        return null; // If there's no memory data or position, render nothing.
+    }
+
     const screenPosition = [position[0], 2.5, position[2]];
 
     let memoryComponent = null;
