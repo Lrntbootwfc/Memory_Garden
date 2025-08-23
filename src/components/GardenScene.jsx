@@ -12,14 +12,14 @@ import DisplayCard from "./DisplayCard";
 import { createClusters } from "../utils/clusterUtils";
 import Cluster from "./Cluster";
 import GardenControls from "./GardenControls";
-// NEW: Ab hum HologramScreen component import kar rahe hain.
 import HologramScreen from "./HologramScreen";
+import PlayerControls from "./PlayerControls";
 
 
 // 🌸 Flower models
 const flowerModels = [
-    { path: "/models/alien_flower.glb", scale: 1.0 },
-    { path: "/models/blue_flower_animated.glb", scale: 1.5 },
+    { path: "/models/alien_flower.glb", scale: 0.2 },
+    { path: "/models/blue_flower_animated.glb", scale:0.2 },
     { path: "/models/calendula_flower.glb", scale: 1.5 },
     { path: "/models/flower (1).glb", scale: 1.5 },
     { path: "/models/flower.glb", scale: 1.5 },
@@ -33,11 +33,10 @@ const lotusModel = "/models/lotus_flower_by_geometry_nodes.glb";
 const gardenSize = 50;
 const spacing = 2.0;
 
-// 🌸 NEW: Grid settings for flower rows
 const ROWS = 11;
 const COLS = 10;
-const SPACING_X = 3;
-const SPACING_Z = 4;
+const SPACING_X = 5;
+const SPACING_Z = 6;
 const BLOOM_DISTANCE = 50;
 
 const keyForCell = (x, z) => `${x}|${z}`;
@@ -45,7 +44,7 @@ const generateLotusFlowers = () => {
     const lotusFlowers = [];
     const pondCenter = [15, 0, 15];
     const pondRadius = 4;
-    const lotusCount = 6;
+    const lotusCount = 5;
 
     for (let i = 0; i < lotusCount; i++) {
         const angle = (i / lotusCount) * Math.PI * 2;
@@ -57,129 +56,24 @@ const generateLotusFlowers = () => {
     return lotusFlowers;
 };
 
-function PlayerControls({ isLocked, setIsLocked }) {
-    const { camera, gl } = useThree();
-    const controlsRef = useRef();
-    const velocity = useRef(new THREE.Vector3());
-    const direction = new THREE.Vector3();
-    const keys = useRef({});
-    // const [isLocked, setIsLocked] = useState(false);
-
-    useEffect(() => {
-
-        if (!isLocked) {
-            document.exitPointerLock();
-        }
-    }, [isLocked]);
-
-    useEffect(() => {
-        const handleLockChange = () => {
-            setIsLocked(document.pointerLockElement === gl.domElement);
-        };
-        document.addEventListener("pointerlockchange", handleLockChange);
-        return () => document.removeEventListener("pointerlockchange", handleLockChange);
-    }, [gl.domElement, setIsLocked]);
-
-
-    useEffect(() => {
-        const handleKeyDown = (e) => (keys.current[e.code] = true);
-        const handleKeyUp = (e) => (keys.current[e.code] = false);
-
-        document.addEventListener("keydown", handleKeyDown);
-        document.addEventListener("keyup", handleKeyUp);
-
-        return () => {
-            document.removeEventListener("keydown", handleKeyDown);
-            document.removeEventListener("keyup", handleKeyUp);
-        };
-    }, []);
-
-    const joystickData = useRef({ x: 0, y: 0 });
-    useEffect(() => {
-        if (!isMobile) return;
-
-        const joystickZone = document.createElement("div");
-        joystickZone.style.position = "absolute";
-        joystickZone.style.bottom = "80px";
-        joystickZone.style.left = "50px";
-        joystickZone.style.width = "120px";
-        joystickZone.style.height = "120px";
-        joystickZone.style.zIndex = "1000";
-        document.body.appendChild(joystickZone);
-
-        const joystick = nipplejs.create({
-            zone: joystickZone,
-            mode: "static",
-            position: { left: "60px", bottom: "60px" },
-            color: "blue",
-            size: 100,
-        });
-
-        joystick.on("move", (_, data) => {
-            const rad = data.angle.radian;
-            joystickData.current.x = Math.cos(rad) * (data.force || 0);
-            joystickData.current.y = Math.sin(rad) * (data.force || 0);
-        });
-
-        joystick.on("end", () => {
-            joystickData.current.x = 0;
-            joystickData.current.y = 0;
-        });
-
-        return () => joystickZone.remove();
-    }, []);
-
-
-    useFrame((_, delta) => {
-        // if (!controlsRef.current || !controlsRef.current.isLocked) return;
-        // if (!isLocked) return;
-
-        if (!controlsRef.current || !isLocked) {
-            return;
-        }
-        direction.set(0, 0, 0);
-        if (!isMobile) {
-            if (keys.current["KeyW"]) direction.z -= 1;
-            if (keys.current["KeyS"]) direction.z += 1;
-            if (keys.current["KeyA"]) direction.x -= 1;
-            if (keys.current["KeyD"]) direction.x += 1;
-            if (keys.current["Space"]) direction.y += 1;
-            if (keys.current["KeyQ"]) direction.y -= 1;
-        } else {
-            direction.x = joystickData.current.x;
-            direction.z = -joystickData.current.y;
-        }
-        direction.normalize();
-
-        const speed = 10;
-        velocity.current.copy(direction).multiplyScalar(speed * delta);
-        controlsRef.current.moveRight(velocity.current.x);
-        controlsRef.current.moveForward(velocity.current.z);
-        // camera.position.y += velocity.current.y;
-
-
-    });
-
-    return isLocked ? <PointerLockControls ref={controlsRef} args={[camera, gl.domElement]} /> : <OrbitControls />;
-}
-
 const params = new URLSearchParams(window.location.search);
 const API_BASE = params.get("api_base") || window.memoryscape_api_base || "http://127.0.0.1:8000/api";
 const API_ENDPOINT = `${API_BASE}/memories`;
 const PARAM_USER_ID = params.get("user_id");
 const RUNTIME_USER_ID = window.memoryscape_user_id;
-const FALLBACK_USER_ID = 2; // optional
+const FALLBACK_USER_ID = 2; 
 
 const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLocked, setIsControlsLocked }) => {
     const [flowers, setFlowers] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const { camera, scene } = useThree();
+    const { camera, scene, raycaster } = useThree();
     const grassTexture = useTexture("/textures/grass.jpeg");
     grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
     grassTexture.repeat.set(10, 10);
     const lotusFlowers = useMemo(() => generateLotusFlowers(), []);
 
+    const playerControlsRef = useRef();
     useEffect(() => {
         const fetchFlowers = async () => {
             try {
@@ -199,15 +93,71 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
             }
         };
         fetchFlowers();
-    }, []); // Empty dependency array means this runs only once on mount
+    }, []); 
 
-    const clusters = useMemo(() => createClusters(flowers, "date"), [flowers]);
+// const clusters = useMemo(() => createClusters(flowers, "date"), [flowers]);
+    const clusters = useMemo(() => {
+        const rawClusters = createClusters(flowers, "date");
+        const positionedClusters = [];
+        const occupiedPositions = new Set();
+        let col = 0;
+        let row = 0;
+
+        rawClusters.forEach(cluster => {
+            let placed = false;
+            while (!placed) {
+                const newX = (col * SPACING_X) - (COLS * SPACING_X / 2);
+                const newZ = (row * SPACING_Z) - (ROWS * SPACING_Z / 2);
+                const positionKey = keyForCell(col, row);
+
+                if (!occupiedPositions.has(positionKey)) {
+                    cluster.centerPosition = [newX, 0, newZ];
+                    occupiedPositions.add(positionKey);
+                    const flowerCount = cluster.flowers.length;
+                    const flowerSpreadRadius = 2.0; // Defines the radius of the circle
+
+                    cluster.flowers.forEach((flower, index) => {
+                        // If there's only one flower, place it at the center
+                        if (flowerCount === 1) {
+                            flower.position = cluster.centerPosition;
+                        } else {
+                            const angle = (index / flowerCount) * Math.PI * 2;
+                            const x = cluster.centerPosition[0] + flowerSpreadRadius * Math.cos(angle);
+                            const z = cluster.centerPosition[2] + flowerSpreadRadius * Math.sin(angle);
+                            // Overwrite the original position to arrange flowers in a circle
+                            flower.position = [x, 0, z];
+                        }
+                    });
+
+
+                    positionedClusters.push(cluster);
+                    placed = true;
+                }
+
+                // Move to the next grid cell
+                col++;
+                if (col >= COLS) {
+                    col = 0;
+                    row++;
+                }
+
+                if (row >= ROWS) {
+                    console.warn("Not enough grid space for all clusters.");
+                    break;
+                }
+            }
+        });
+        return positionedClusters;
+    }, [flowers]);
+
     const [selectedFlower, setSelectedFlower] = useState(null);
 
     const handleFlowerClick = (flower) => {
         console.log("Flower clicked:", flower);
         console.log("Passing this to Hologram:", flower.memory);
+
         setSelectedFlower(flower);
+        playerControlsRef.current?.unlock();
         setIsControlsLocked(false);
     };
 
@@ -215,17 +165,57 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
         setSelectedFlower(null);
     };
 
-    useFrame(() => {
-
-    });
-
     useEffect(() => {
         scene.fog = new THREE.FogExp2("#87CEEB", 0.0008);
     }, [scene]);
 
+useEffect(() => {
+        const handleMouseDown = () => {
+            // Only raycast if the player controls exist and are locked
+            if (!playerControlsRef.current?.isLocked()) return;
+
+            // Set the raycaster to shoot from the center of the screen (where the crosshair would be)
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+
+            // Get all the objects in the scene that could be flowers (we assume they are Groups from GLBs)
+            const potentialFlowers = scene.children.filter(
+                (obj) => obj.isGroup && obj.children.length > 0
+            );
+            const intersects = raycaster.intersectObjects(potentialFlowers, true);
+
+            if (intersects.length > 0) {
+                const clickPoint = intersects[0].point;
+                let closestFlower = null;
+                let minDistance = Infinity;
+
+                // Find the flower data corresponding to the clicked point
+                clusters.forEach(cluster => {
+                    cluster.flowers.forEach(flower => {
+                        const flowerPos = new THREE.Vector3().fromArray(flower.position);
+                        const distance = clickPoint.distanceTo(flowerPos);
+                        // The threshold (2.0) ensures we only select flowers we are close to
+                        if (distance < minDistance && distance < 2.0) {
+                            minDistance = distance;
+                            closestFlower = flower;
+                        }
+                    });
+                });
+
+                if (closestFlower) {
+                    handleFlowerClick(closestFlower);
+                }
+            }
+        };
+
+        window.addEventListener('mousedown', handleMouseDown);
+        return () => window.removeEventListener('mousedown', handleMouseDown);
+        // Dependencies ensure this effect runs with up-to-date values
+    }, [raycaster, camera, scene, clusters]);
+
+
     const getFlowerModelPath = (emotion) => {
         const modelIndex = emotion ? (emotion.length % flowerModels.length) : 0;
-        return flowerModels[modelIndex].path;
+        return flowerModels[modelIndex];
     };
 
     return (
@@ -258,24 +248,30 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
             ) : (
                 clusters.map((cluster, idx) => (
                     <React.Fragment key={`cluster-${idx}`}>
-                        {cluster.flowers.map((flower, fIdx) => (
-                            <Flower
-                                key={`flower-${idx}-${fIdx}`}
-                                // NEW: position ko seedhe database se use karo
-                                position={flower.position}
-                                // NEW: modelPath ko seedhe database se use karo
-                                // modelPath={flowerModels[fIdx % flowerModels.length].path}
-                                modelPath={getFlowerModelPath(flower.emotion)}
-                                // NEW: targetHeight ko seedhe database se use karo
-                                targetHeight={1.5}
-                                // autoBloom={flower.bloomed}
-                                autoBloom={true}
-                                onClick={() => handleFlowerClick(flower)}
-                                hasMemory={!!flower.memory}
-                            />
-                        ))}
+                        {cluster.flowers.map((flower, fIdx) => {
+                            // This function now returns an object like { path: "...", scale: 0.2 }
+                            const flowerModel = getFlowerModelPath(flower.emotion); 
+                            
+                            return (
+                                <Flower
+                                    key={`flower-${idx}-${fIdx}`}
+                                    position={flower.position}
+                                    // CORRECTED: Pass the .path property (a string)
+                                    modelPath={flowerModel.path}
+                                    // CORRECTED: Pass the .scale property (a number)
+                                    targetHeight={flowerModel.scale}
+                                    autoBloom={true}
+                                    onClick={() => handleFlowerClick(flower)}
+                                    hasMemory={!!flower.memory}
+                                />
+                            );
+                        })}
 
+
+
+                        
                         <DisplayCard
+                            pointerEvents="none"
                             clusterPosition={cluster.centerPosition}
                             clusterSize={cluster.size}
                             date={cluster.date}
@@ -302,10 +298,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
 
             <Sky sunPosition={[100, 20, 100]} />
             <Environment preset="sunset" />
-            <PlayerControls
-                isLocked={isControlsLocked}
-                setIsLocked={setIsControlsLocked}
-            />
+            <PlayerControls ref={playerControlsRef} />
         </>
     );
 };
