@@ -10,16 +10,14 @@ import { isMobile } from "react-device-detect";
 import InfiniteGround from "./InfiniteGround";
 import DisplayCard from "./DisplayCard";
 import { createClusters } from "../utils/clusterUtils";
-import Cluster from "./Cluster";
-import GardenControls from "./GardenControls";
 import HologramScreen from "./HologramScreen";
 import PlayerControls from "./PlayerControls";
 
 
 // 🌸 Flower models
 const flowerModels = [
-    { path: "/models/alien_flower.glb", scale: 0.2 },
-    { path: "/models/blue_flower_animated.glb", scale:0.2 },
+    { path: "/models/alien_flower.glb", scale: 0.5 },
+    { path: "/models/blue_flower_animated.glb", scale:0.5 },
     { path: "/models/calendula_flower.glb", scale: 1.5 },
     { path: "/models/flower (1).glb", scale: 1.5 },
     { path: "/models/flower.glb", scale: 1.5 },
@@ -74,6 +72,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
     const lotusFlowers = useMemo(() => generateLotusFlowers(), []);
 
     const playerControlsRef = useRef();
+    const [playerControlsActive, setPlayerControlsActive] = useState(true);
     useEffect(() => {
         const fetchFlowers = async () => {
             try {
@@ -157,12 +156,13 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
         console.log("Passing this to Hologram:", flower.memory);
 
         setSelectedFlower(flower);
+        setPlayerControlsActive(false);
         playerControlsRef.current?.unlock();
-        setIsControlsLocked(false);
     };
 
     const handleHologramClose = () => {
         setSelectedFlower(null);
+        setPlayerControlsActive(true);
     };
 
     useEffect(() => {
@@ -172,7 +172,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
 useEffect(() => {
         const handleMouseDown = () => {
             // Only raycast if the player controls exist and are locked
-            if (!playerControlsRef.current?.isLocked()) return;
+            if (!playerControlsRef.current?.isLocked) return;
 
             // Set the raycaster to shoot from the center of the screen (where the crosshair would be)
             raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
@@ -298,7 +298,7 @@ useEffect(() => {
 
             <Sky sunPosition={[100, 20, 100]} />
             <Environment preset="sunset" />
-            <PlayerControls ref={playerControlsRef} />
+            <PlayerControls ref={playerControlsRef} active={playerControlsActive} />
         </>
     );
 };

@@ -1,19 +1,16 @@
 // src/components/PlayerControls.jsx
 
-import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { PointerLockControls, OrbitControls, Html } from '@react-three/drei';
+import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { PointerLockControls } from '@react-three/drei';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { isMobile } from 'react-device-detect';
 import nipplejs from 'nipplejs';
 
-const PlayerControls = forwardRef((props, ref) => {
-    // 🌸 1. GET SCENE FOR COLLISION DETECTION
-    // We need access to the scene to find all the objects we can collide with.
+
+const PlayerControls = forwardRef(({ active = true }, ref) => {
     const { camera, gl, scene } = useThree();
-    const [isLocked, setIsLocked] = useState(false);
     const pointerLockControlsRef = useRef();
-    const orbitControlsRef = useRef();
 
     const velocity = useRef(new THREE.Vector3());
     const direction = new THREE.Vector3();
@@ -24,15 +21,30 @@ const PlayerControls = forwardRef((props, ref) => {
     const GRAVITY = -30;
     const JUMP_STRENGTH = 10;
     const PLAYER_HEIGHT = 1.8;
-    // 🌸 2. SETUP FOR COLLISION
-    const playerCollider = new THREE.Box3();
     const playerRaycaster = new THREE.Raycaster();
-    const collisionDistance = 0.5; // How close the player can get to an object.
+    const collisionDistance = 0.5;
 
+    // Expose the unlock function to the parent component.
     useImperativeHandle(ref, () => ({
         unlock: () => document.exitPointerLock(),
-        isLocked: () => isLocked,
     }));
+
+    // 🌸 2. PROGRAMMATIC LOCKING
+    // This effect handles locking the controls. It only runs when the 'active' prop is true.
+    useEffect(() => {
+        const handleCanvasClick = () => {
+            if (active && pointerLockControlsRef.current) {
+                pointerLockControlsRef.current.lock();
+            }
+        };
+        // We listen for clicks on the canvas element itself.
+        const canvas = gl.domElement;
+        canvas.addEventListener('click', handleCanvasClick);
+        return () => {
+            canvas.removeEventListener('click', handleCanvasClick);
+        };
+    }, [active, gl.domElement]);
+
 
     useEffect(() => {
         const handleKeyDown = (e) => (keys.current[e.code] = true);
@@ -65,33 +77,26 @@ const PlayerControls = forwardRef((props, ref) => {
         return () => joystickZone.remove();
     }, []);
 
-    // 🌸 3. COLLISION DETECTION FUNCTION
     const checkCollision = (moveDirection) => {
         const player = pointerLockControlsRef.current.getObject();
-        // Set the raycaster's origin to the player's current position.
         playerRaycaster.set(player.position, moveDirection);
-        
-        // Find all potential objects to collide with (we assume flowers are complex groups).
         const collidableObjects = scene.children.filter(
             (obj) => obj.isGroup && obj.children.length > 0
         );
         const intersections = playerRaycaster.intersectObjects(collidableObjects, true);
-
-        // If a collision is found closer than our allowed distance, we block the movement.
         if (intersections.length > 0 && intersections[0].distance < collisionDistance) {
-            return true; // Collision detected
+            return true;
         }
-        return false; // No collision
+        return false;
     };
 
-
     useFrame((_, delta) => {
-        if (!isLocked || !pointerLockControlsRef.current) return;
+        // We only run the movement logic if the controls are actually locked.
+        if (!pointerLockControlsRef.current?.isLocked) return;
 
         const speed = 10;
         const player = pointerLockControlsRef.current.getObject();
 
-        // Ground check
         if (player.position.y <= PLAYER_HEIGHT) {
             velocity.current.y = Math.max(0, velocity.current.y);
             onGround.current = true;
@@ -100,15 +105,12 @@ const PlayerControls = forwardRef((props, ref) => {
             onGround.current = false;
         }
 
-        // Jumping
         if (keys.current['Space'] && onGround.current) {
             velocity.current.y = JUMP_STRENGTH;
         }
 
-        // Gravity
         velocity.current.y += GRAVITY * delta;
 
-        // Horizontal movement direction
         direction.x = (keys.current['KeyD'] ? 1 : 0) - (keys.current['KeyA'] ? 1 : 0);
         direction.z = (keys.current['KeyS'] ? 1 : 0) - (keys.current['KeyW'] ? 1 : 0);
         
@@ -119,74 +121,30 @@ const PlayerControls = forwardRef((props, ref) => {
 
         if (direction.length() > 0) direction.normalize();
         
-        // � 4. CHECK COLLISIONS BEFORE MOVING
         const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
         const rightVector = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
 
-        // Forward/Backward Collision
         const moveZ = new THREE.Vector3().copy(forwardVector).multiplyScalar(direction.z);
         if (direction.z !== 0 && checkCollision(moveZ.normalize())) {
-           // Don't move forward/backward
+           // Block forward/backward movement
         } else {
             pointerLockControlsRef.current.moveForward(direction.z * speed * delta);
         }
 
-        // Left/Right Collision
         const moveX = new THREE.Vector3().copy(rightVector).multiplyScalar(direction.x);
         if (direction.x !== 0 && checkCollision(moveX.normalize())) {
-            // Don't move left/right
+            // Block left/right movement
         } else {
             pointerLockControlsRef.current.moveRight(direction.x * speed * delta);
         }
 
-        // Apply vertical movement (gravity/jump)
         player.position.y += velocity.current.y * delta;
     });
 
-    const handleUnlock = () => {
-        setIsLocked(false);
-        if (orbitControlsRef.current) {
-            const lookDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-            const newTarget = camera.position.clone().add(lookDirection.multiplyScalar(10));
-            orbitControlsRef.current.target.copy(newTarget);
-            orbitControlsRef.current.update();
-        }
-    };
-
     return (
-        <>
-            <PointerLockControls
-                ref={pointerLockControlsRef}
-                args={[camera, gl.domElement]}
-                onLock={() => setIsLocked(true)}
-                onUnlock={handleUnlock}
-                makeDefault={isLocked}
-            />
-            <OrbitControls
-                ref={orbitControlsRef}
-                args={[camera, gl.domElement]}
-                enabled={!isLocked}
-                makeDefault={!isLocked}
-            />
-            {!isLocked && (
-                <Html center>
-                    <div
-                        style={{
-                            textAlign: 'center',
-                            color: 'white',
-                            background: 'rgba(0,0,0,0.6)',
-                            padding: '12px 24px',
-                            borderRadius: '8px',
-                            border: '1px solid white',
-                            pointerEvents: 'none',
-                        }}
-                    >
-                        <h2>Click scene to explore</h2>
-                        <p>(W, A, S, D = Move | Space = Jump | ESC = Exit)</p>
-                    </div>
-                </Html>
-            )}
-        </>
+        // 🌸 3. SIMPLIFIED RETURN
+        // Only the PointerLockControls are needed now.
+        <PointerLockControls ref={pointerLockControlsRef} args={[camera, gl.domElement]} />
     );
 });
 
