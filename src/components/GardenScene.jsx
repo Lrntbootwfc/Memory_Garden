@@ -153,10 +153,11 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
     }, [flowers]);
 
     useEffect(() => {
-        if (clusters) { 
-            setClusters(clusters);
-        }
-    }, [clusters, setClusters]);
+    // This check prevents errors if the store is not ready
+    if (typeof setClusters === 'function') {
+        setClusters(clusters);
+    }
+}, [clusters, setClusters]);
 
     const [selectedFlower, setSelectedFlower] = useState(null);
 
