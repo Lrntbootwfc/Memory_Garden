@@ -12,6 +12,7 @@ import DisplayCard from "./DisplayCard";
 import { createClusters } from "../utils/clusterUtils";
 import HologramScreen from "./HologramScreen";
 import PlayerControls from "./PlayerControls";
+import { useAppStore } from '../state/store';
 
 
 // 🌸 Flower models
@@ -70,7 +71,9 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
     grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
     grassTexture.repeat.set(10, 10);
     const lotusFlowers = useMemo(() => generateLotusFlowers(), []);
-
+    
+    const setClusters = useAppStore((state) => state.setClusters);
+    
     const playerControlsRef = useRef();
     const [playerControlsActive, setPlayerControlsActive] = useState(true);
     useEffect(() => {
@@ -148,6 +151,12 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
         });
         return positionedClusters;
     }, [flowers]);
+
+    useEffect(() => {
+        if (clusters) { 
+            setClusters(clusters);
+        }
+    }, [clusters, setClusters]);
 
     const [selectedFlower, setSelectedFlower] = useState(null);
 
