@@ -15,6 +15,9 @@ export const useAppStore = create((set) => ({
     // --- Player state ---
     playerPos: [0, 0, 0],
 
+    clusters: [],
+    setClusters: (newClusters) => set({ clusters: newClusters }),
+
     // --- UI Toggles ---
     showSearch: false,
     showUpload: false,

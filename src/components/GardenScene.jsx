@@ -56,7 +56,7 @@ const generateLotusFlowers = () => {
 };
 
 const params = new URLSearchParams(window.location.search);
-const API_BASE = params.get("api_base") || window.memoryscape_api_base || "http://127.0.0.1:8000/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 const API_ENDPOINT = `${API_BASE}/memories`;
 const PARAM_USER_ID = params.get("user_id");
 const RUNTIME_USER_ID = window.memoryscape_user_id;

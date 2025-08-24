@@ -66,9 +66,7 @@ function App() {
         </Suspense>
       </Canvas>
 
-      {/* 📌 Fixed UI overlay (buttons on top of canvas) */}
-      
-      {/* Button container on the top right */}
+
       <div className="absolute top-4 right-4 flex flex-col gap-3 z-50 text-white">
         {/* Map icon button */}
         <motion.button
@@ -78,7 +76,7 @@ function App() {
           🗺️
         </motion.button>
 
-        {/* Search icon button */}
+
         <motion.button
           onClick={(e) => {
             e.stopPropagation();
@@ -89,7 +87,6 @@ function App() {
           🔍
         </motion.button>
 
-        {/* Compass button */}
         <motion.button
           className="p-2 rounded-full bg-white/20 hover:bg-white/40 text-white"
           onClick={(e) => {
@@ -101,7 +98,6 @@ function App() {
         </motion.button>
       </div>
 
-      {/* Enter Garden button container on the top left */}
       <div className="absolute top-4 left-4 z-50">
         <button
           className="px-4 py-2 rounded-md bg-white/80 hover:bg-white/100 text-black font-semibold shadow-lg"
@@ -109,7 +105,6 @@ function App() {
             const canvas = document.querySelector("canvas");
             if (canvas) {
               canvas.requestPointerLock();
-              // CHANGED: isControlsLocked ko true set kiya
               setIsControlsLocked(true);
             }
           }}
@@ -118,12 +113,10 @@ function App() {
         </button>
       </div>
 
-      {/* Conditional Drawers with camera data */}
-      {showMinimap && <MiniMapDrawer onClose={toggleMinimap} cameraPos={cameraPos} />}
+      {showMinimap && <MiniMapDrawer onClose={toggleMinimap}/>}
       {showSearch && <SearchDrawer onClose={toggleSearch} />}
       {showCompass && <CompassDrawer rotation={(cameraRot * 180) / Math.PI} />}
     
-      {/* NEW: Instructions for controls */}
       <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 100, color: 'white', fontSize: '1.2rem', backgroundColor: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '5px', textAlign: 'center' }}>
           {isControlsLocked ? "Controls Locked. Press 'E' to unlock and click flowers." : "Controls Unlocked. Click on a flower or press 'E' to lock again."}
       </div>
