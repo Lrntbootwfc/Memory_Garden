@@ -16,17 +16,19 @@ import { useAppStore } from '../state/store';
 
 
 // 🌸 Flower models
-const flowerModels = [
-    { path: "/models/alien_flower.glb", scale: 0.5 },
-    { path: "/models/blue_flower_animated.glb", scale:0.5 },
-    { path: "/models/calendula_flower.glb", scale: 1.5 },
-    { path: "/models/flower (1).glb", scale: 1.5 },
-    { path: "/models/flower.glb", scale: 1.5 },
-    { path: "/models/margarita_flower.glb", scale: 1.5 },
-    { path: "/models/orchid_flower.glb", scale: 1.5 },
-    { path: "/models/sunflower.glb", scale: 1.5 },
-    { path: "/models/white_flower.glb", scale: 1.5 },
-];
+// 🌸 Flower models - UPDATED WITH OPTIMIZED PATHS
+const flowerModelData = {
+    "alien_flower_optimized.glb": { path: "/models/alien_flower_optimized.glb", scale: 0.5 },
+    "blue_flower_optimized.glb": { path: "/models/blue_flower_optimized.glb", scale: 0.5 },
+    "calendula_flower.glb": { path: "/models/calendula_flower.glb", scale: 1.5 },
+    "flower_original_optimized.glb": { path: "/models/flower_original_optimized.glb", scale: 1.5 },
+    "flower_optimized.glb": { path: "/models/flower_optimized.glb", scale: 1.5 },
+    "white_flower_optimized.glb": { path: "/models/white_flower_optimized.glb", scale: 0.5 },
+    "lotus_flower_by_geometry_nodes.glb": { path: "/models/lotus_flower_by_geometry_nodes.glb", scale: 0.5 },
+    "sunflower.glb": { path: "/models/sunflower.glb", scale: 0.005 },
+    // Add any other models you have here
+};
+const defaultModel = { path: "/models/flower_optimized.glb", scale: 1.5 };
 
 const lotusModel = "/models/lotus_flower_by_geometry_nodes.glb";
 const gardenSize = 50;
@@ -80,14 +82,19 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
         const fetchFlowers = async () => {
             try {
                 const userId = PARAM_USER_ID || RUNTIME_USER_ID || FALLBACK_USER_ID;
-                if (!userId) {
-                    setLoading(false);
-                    return;
-                }
+                if (!userId) { setLoading(false); return; }
                 const response = await fetch(`${API_ENDPOINT}?user_id=${userId}`);
                 if (!response.ok) throw new Error("Network response was not ok");
-                const data = await response.json();
-                setFlowers(data);
+                const rawMemories = await response.json();
+                const formattedFlowers = rawMemories.map(memory => ({
+                    id: memory.id,
+                    position: [0, 0, 0], // Add the required 'position' property. It gets overwritten by clustering later.
+                    memory: memory,      // Nest the original memory data inside a 'memory' property.
+                    date: memory.created_at.split("T")[0],
+                    emotion: memory.emotion,
+                }));
+                
+                setFlowers(formattedFlowers); // Set the correctly formatted data to the state.
             } catch (error) {
                 console.error("Failed to fetch flowers:", error);
             } finally {
@@ -223,10 +230,10 @@ useEffect(() => {
     }, [raycaster, camera, scene, clusters]);
 
 
-    const getFlowerModelPath = (emotion) => {
-        const modelIndex = emotion ? (emotion.length % flowerModels.length) : 0;
-        return flowerModels[modelIndex];
-    };
+    // const getFlowerModelPath = (emotion) => {
+    //     const modelIndex = emotion ? (emotion.length % flowerModels.length) : 0;
+    //     return flowerModels[modelIndex];
+    // };
 
     return (
         <>
@@ -260,16 +267,17 @@ useEffect(() => {
                     <React.Fragment key={`cluster-${idx}`}>
                         {cluster.flowers.map((flower, fIdx) => {
                             // This function now returns an object like { path: "...", scale: 0.2 }
-                            const flowerModel = getFlowerModelPath(flower.emotion); 
+                            // const flowerModel = getFlowerModelPath(flower.emotion); 
+                            const modelInfo = flowerModelData[flower.memory.model_path] || defaultModel;
                             
                             return (
                                 <Flower
                                     key={`flower-${idx}-${fIdx}`}
                                     position={flower.position}
                                     // CORRECTED: Pass the .path property (a string)
-                                    modelPath={flowerModel.path}
+                                    modelPath={modelInfo.path}
                                     // CORRECTED: Pass the .scale property (a number)
-                                    targetHeight={flowerModel.scale}
+                                    targetHeight={modelInfo.scale}
                                     autoBloom={true}
                                     onClick={() => handleFlowerClick(flower)}
                                     hasMemory={!!flower.memory}
@@ -296,12 +304,6 @@ useEffect(() => {
                 <HologramScreen
                     position={selectedFlower.position}
                     memoryData={selectedFlower.memory}
-        //             memoryData={{ 
-        //                 type: selectedFlower.media_type, 
-        //                 source: selectedFlower.media_path 
-        // }}
-
-
                     onClose={handleHologramClose}
                 />
             )}
