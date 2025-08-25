@@ -97,6 +97,9 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
     // const lotusFlowers = useMemo(() => generateLotusFlowers(), []);
 
     const setClusters = useAppStore((state) => state.setClusters);
+    const [selectedFlower, setSelectedFlower] = useState(null);
+    const [hologramTransform, setHologramTransform] = useState({ position: null, rotation: null });
+    
 
     const playerControlsRef = useRef();
     const [playerControlsActive, setPlayerControlsActive] = useState(true);
@@ -204,26 +207,26 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
         }
     }, [clusters, setClusters]);
 
-    const [selectedFlower, setSelectedFlower] = useState(null);
-
-
-
 const handleFlowerClick = (flower) => {
-    // Only proceed if a flower isn't already selected
-    if (!selectedFlower && flower && flower.memory) {
-        console.log("Flower clicked:", flower);
-        console.log("Passing this to Hologram:", flower.memory);
-
-        setSelectedFlower(flower);
-        setPlayerControlsActive(false); // Disable movement
-        if (playerControlsRef.current?.isLocked) {
-            playerControlsRef.current.unlock(); // Unlock the pointer
+        if (!selectedFlower && flower && flower.memory) {
+            setSelectedFlower(flower);
+            const hologramDistance = 3; // How far from the camera it should appear
+            const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            const position = camera.position.clone().add(forwardVector.multiplyScalar(hologramDistance));
+            
+            setHologramTransform({ position });
+            
+            setPlayerControlsActive(false);
+            if (playerControlsRef.current?.isLocked) {
+                playerControlsRef.current.unlock();
+            }
         }
-    }
-};
+    };
+;
 
 const handleHologramClose = () => {
     setSelectedFlower(null); // Clear the selected flower
+    setHologramTransform({ position: null });
     setPlayerControlsActive(true); // Re-enable movement
 };
 
@@ -231,48 +234,6 @@ const handleHologramClose = () => {
     useEffect(() => {
         scene.fog = new THREE.FogExp2("#87CEEB", 0.0008);
     }, [scene]);
-
-
-useEffect(() => {
-    const handleMouseDown = (event) => {
-        // Stop the default browser action to prevent unwanted behavior
-        event.preventDefault();
-
-        const pointer = new THREE.Vector2();
-        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-        raycaster.setFromCamera(pointer, camera);
-
-        // Raycast against all objects in the scene, recursively
-        const intersects = raycaster.intersectObjects(scene.children, true);
-
-        // Find the first intersected object that is part of a flower
-        for (const intersect of intersects) {
-            let object = intersect.object;
-            
-            // Traverse up the scene graph from the clicked object
-            while (object) {
-                // Check if the current object has our custom flower data
-                if (object.userData.flowerData) {
-                    // We found it! Trigger the hologram and stop searching.
-                    handleFlowerClick(object.userData.flowerData);
-                    return; // Exit the loop and function
-                }
-                object = object.parent; // Move up to the next parent
-            }
-        }
-    };
-
-    // Use the canvas element for event listening for better reliability
-    const canvas = document.querySelector('canvas');
-    canvas.addEventListener('mousedown', handleMouseDown);
-
-    return () => {
-        canvas.removeEventListener('mousedown', handleMouseDown);
-    };
-}, [raycaster, camera, scene, clusters, lotusFlowers]); 
-
 
     return (
         <>
@@ -342,14 +303,13 @@ useEffect(() => {
                 ))
             )}
 
-            {selectedFlower && selectedFlower.memory && selectedFlower.memory.media_path && (
+            {selectedFlower && hologramTransform.position && (
                 <HologramScreen
-                    position={selectedFlower.position}
+                    position={hologramTransform.position}
                     memoryData={selectedFlower.memory}
                     onClose={handleHologramClose}
                 />
             )}
-
             <Sky sunPosition={[100, 20, 100]} />
             <Environment preset="sunset" />
             <PlayerControls ref={playerControlsRef} active={playerControlsActive} />

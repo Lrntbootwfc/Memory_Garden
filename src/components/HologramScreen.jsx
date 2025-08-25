@@ -1,52 +1,46 @@
-// src/components/HologramScreen.jsx
-
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { Html, Plane } from '@react-three/drei';
 import { useSpring, animated } from '@react-spring/three';
 import * as THREE from 'three';
+import { useFrame, useThree } from '@react-three/fiber';
+
+// --- FIX: Construct absolute media URL ---
+const API_ROOT = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api").replace("/api", "");
 
 const HologramScreen = ({ position, memoryData, onClose }) => {
-    // --- FIX: Access data correctly -
+    const { camera } = useThree();
+    const groupRef = useRef();
     const { media_path, media_type, title, description } = memoryData;
 
-    // Spring animation for a smooth fade-in/fade-out effect
-    const [styles, api] = useSpring(() => ({
-        opacity: 0,
-        scale: 0.5,
+    // --- FIX: Create a full, absolute URL for the media content ---
+    const fullMediaPath = media_path ? `${API_ROOT}${media_path}` : null;
+
+    const { opacity, scale } = useSpring({
+        from: { opacity: 0, scale: 0.5 },
+        to: { opacity: 1, scale: 1 },
         config: { tension: 200, friction: 20 },
-    }));
+    });
 
-    // Trigger animation on mount and unmount
-    useEffect(() => {
-        api.start({ opacity: 1, scale: 1 }); // Fade in
-        return () => api.start({ opacity: 0, scale: 0.5 }); // Fade out on close
-    }, [api]);
+    // --- FIX: Make the hologram always face the camera ---
+    useFrame(() => {
+        if (groupRef.current) {
+            groupRef.current.lookAt(camera.position);
+        }
+    });
 
-    // Calculate a better position above the flower
-    const screenPosition = [position[0], position[1] + 2.0, position[2]];
-
-    // Stop propagation to prevent player controls from locking when clicking the UI
-    const handleContentClick = (e) => {
-        e.stopPropagation();
-    };
+    const handleContentClick = (e) => e.stopPropagation();
 
     return (
-        <animated.group position={screenPosition} scale={styles.scale}>
+        <animated.group ref={groupRef} position={position} scale={scale}>
             {/* Transparent background plane */}
-            <Plane
-                args={[4, 2.5]}
-                onClick={(e) => {
-                    e.stopPropagation(); // Prevent clicks from going through to the ground
-                    onClose(); // Close when clicking the background
-                }}
-            >
-                <meshStandardMaterial
+            <Plane args={[4.2, 2.7]}>
+                <animated.meshStandardMaterial
                     color="#0077ff"
-                    opacity={styles.opacity}
+                    opacity={opacity.to(o => o * 0.25)} // Make background more subtle
                     transparent={true}
                     side={THREE.DoubleSide}
-                    emissive="#0077ff"
-                    emissiveIntensity={0.2}
+                    emissive="#00aaff"
+                    emissiveIntensity={0.3}
                 />
             </Plane>
 
@@ -57,17 +51,21 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
                 position={[0, 0, 0.01]} // Slightly in front of the plane
                 occlude
                 className="hologram-content"
-                onPointerDown={handleContentClick} // Prevent click-through
+                onPointerDown={handleContentClick}
             >
                 <div className="memory-card">
                     <h3>{title}</h3>
                     <p>{description}</p>
-                    
-                    {/* --- FIX: Correctly render media based on media_type --- */}
-                    {media_type === 'image' && <img src={media_path} alt={title} />}
-                    {media_type === 'video' && <video src={media_path} controls autoPlay loop />}
-                    {media_type === 'audio' && <audio src={media_path} controls autoPlay loop />}
-                    
+
+                    {/* --- FIX: Render media using the corrected `fullMediaPath` --- */}
+                    {fullMediaPath && (
+                        <div className="media-container">
+                            {media_type === 'image' && <img src={fullMediaPath} alt={title} />}
+                            {media_type === 'video' && <video src={fullMediaPath} controls autoPlay loop muted />}
+                            {media_type === 'audio' && <audio src={fullMediaPath} controls autoPlay loop />}
+                        </div>
+                    )}
+
                     <button onClick={onClose} className="close-button">Close</button>
                 </div>
             </Html>

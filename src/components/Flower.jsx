@@ -4,6 +4,22 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
+const MemoryAura = ({ path, targetHeight }) => {
+  const memoryTexture = useTexture(path);
+  return (
+    <mesh position={[0, targetHeight * 1.2, 0]}>
+      <planeGeometry args={[1.2, 1.2]} />
+      <meshBasicMaterial
+        map={memoryTexture}
+        transparent
+        opacity={0.35}
+        side={THREE.DoubleSide}
+        depthWrite={false}
+      />
+    </mesh>
+  );
+};
+
 const Flower = ({
   position = [0, 0, 0],
   modelPath,
@@ -11,7 +27,8 @@ const Flower = ({
   autoBloom = false,// true -> bloom automatically
   memoryTexturePath = null, 
   onClick,
-  hasMemory = false
+  hasMemory = false,
+  ...props
 }) => {
   
   const { scene } = useGLTF(modelPath);
@@ -28,22 +45,14 @@ const Flower = ({
     }
     
     const clone = scene.clone(true);
-
-    // Compute bounding box
     const box = new THREE.Box3().setFromObject(clone);
     const size = new THREE.Vector3();
     box.getSize(size);
-
-    // Scale so tallest dimension = targetHeight
     const scaleFactor = targetHeight / size.y;
     clone.scale.setScalar(scaleFactor);
-
-    // Recompute box after scaling
     const newBox = new THREE.Box3().setFromObject(clone);
     const newSize = new THREE.Vector3();
     newBox.getSize(newSize);
-
-    // Compute offset so base sits on ground
     const yOffset = -newBox.min.y;
 
     return { normalizedScene: clone, yOffset };
@@ -77,6 +86,8 @@ const Flower = ({
 
   return (
     <group
+      {...props}
+
       ref={flowerRef}
       position={[position[0], position[1] + yOffset, position[2]]}
       scale={[scale, scale, scale]}
@@ -84,17 +95,8 @@ const Flower = ({
     >
       <primitive object={normalizedScene} />
       {/* Blended memory aura */}
-      {memoryTexture && (
-        <mesh position={[0, targetHeight * 1.2, 0]}>
-          <planeGeometry args={[1.2, 1.2]} />
-          <meshBasicMaterial
-            map={memoryTexture}
-            transparent
-            opacity={0.35} // faint blending
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
+      {memoryTexturePath && (
+        <MemoryAura path={memoryTexturePath} targetHeight={targetHeight} />
       )}
 
       {hasMemory && glowGeometry && (
