@@ -129,10 +129,6 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
                     emotion: memory.emotion,
                 }));
 
-                const formattedLotus = memoriesWithLotus.map(memory => ({
-                    id: memory.id,
-                    memory: memory,
-                }));
                 const positionedLotus = generateLotusFlowers(memoriesWithLotus);
 
                 setFlowers(formattedFlowers);
@@ -210,27 +206,32 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
 
     const [selectedFlower, setSelectedFlower] = useState(null);
 
-    const handleFlowerClick = (flower) => {
+
+
+const handleFlowerClick = (flower) => {
+    // Only proceed if a flower isn't already selected
+    if (!selectedFlower && flower && flower.memory) {
         console.log("Flower clicked:", flower);
         console.log("Passing this to Hologram:", flower.memory);
 
         setSelectedFlower(flower);
-        setPlayerControlsActive(false);
-        playerControlsRef.current?.unlock();
-    };
+        setPlayerControlsActive(false); // Disable movement
+        if (playerControlsRef.current?.isLocked) {
+            playerControlsRef.current.unlock(); // Unlock the pointer
+        }
+    }
+};
 
-    const handleHologramClose = () => {
-        setSelectedFlower(null);
-        setPlayerControlsActive(true);
-    };
+const handleHologramClose = () => {
+    setSelectedFlower(null); // Clear the selected flower
+    setPlayerControlsActive(true); // Re-enable movement
+};
+
 
     useEffect(() => {
         scene.fog = new THREE.FogExp2("#87CEEB", 0.0008);
     }, [scene]);
 
-    // src/components/GardenScene.jsx
-
-    // src/components/GardenScene.jsx
 
 useEffect(() => {
     const handleMouseDown = (event) => {
