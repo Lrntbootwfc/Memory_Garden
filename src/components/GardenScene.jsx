@@ -228,48 +228,49 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
         scene.fog = new THREE.FogExp2("#87CEEB", 0.0008);
     }, [scene]);
 
+    // src/components/GardenScene.jsx
+
     useEffect(() => {
-        const handleMouseDown = () => {
-            // Only raycast if the player controls exist and are locked
-            if (!playerControlsRef.current?.isLocked) return;
+        const handleMouseDown = (event) => {
+            // We no longer need to check if the controls are locked.
+            // This makes clicking feel much more natural.
 
-            // Set the raycaster to shoot from the center of the screen (where the crosshair would be)
-            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            // Convert the mouse click position to normalized device coordinates (-1 to +1)
+            const pointer = new THREE.Vector2();
+            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-            // Get all the objects in the scene that could be flowers (we assume they are Groups from GLBs)
-            const potentialFlowers = scene.children.filter(
-                (obj) => obj.isGroup && obj.children.length > 0
+            // Update the raycaster to shoot a ray from the camera through the mouse pointer
+            raycaster.setFromCamera(pointer, camera);
+
+            // Get a list of all potential flower objects we've tagged in the scene
+            const allFlowerObjects = scene.children.filter(
+                (obj) => obj.userData.isFlower || obj.userData.isLotus
             );
-            const intersects = raycaster.intersectObjects(potentialFlowers, true);
+
+            const intersects = raycaster.intersectObjects(allFlowerObjects, true);
 
             if (intersects.length > 0) {
-                const clickPoint = intersects[0].point;
-                let closestFlower = null;
-                let minDistance = Infinity;
+                // The first object in the list is the closest one we clicked on
+                const clickedObject = intersects[0].object;
 
-                // Find the flower data corresponding to the clicked point
-                clusters.forEach(cluster => {
-                    cluster.flowers.forEach(flower => {
-                        const flowerPos = new THREE.Vector3().fromArray(flower.position);
-                        const distance = clickPoint.distanceTo(flowerPos);
-                        // The threshold (2.0) ensures we only select flowers we are close to
-                        if (distance < minDistance && distance < 2.0) {
-                            minDistance = distance;
-                            closestFlower = flower;
-                        }
-                    });
-                });
+                // Traverse up the object's parents to find the main flower group
+                // that holds our custom data
+                let flowerParent = clickedObject.parent;
+                while (flowerParent && !flowerParent.userData.flowerData) {
+                    flowerParent = flowerParent.parent;
+                }
 
-                if (closestFlower) {
-                    handleFlowerClick(closestFlower);
+                // If we found the flower data, trigger the hologram!
+                if (flowerParent && flowerParent.userData.flowerData) {
+                    handleFlowerClick(flowerParent.userData.flowerData);
                 }
             }
         };
 
         window.addEventListener('mousedown', handleMouseDown);
         return () => window.removeEventListener('mousedown', handleMouseDown);
-        // Dependencies ensure this effect runs with up-to-date values
-    }, [raycaster, camera, scene, clusters]);
+    }, [raycaster, camera, scene, clusters, lotusFlowers]); // Add lotusFlowers to the dependency array
 
 
     // const getFlowerModelPath = (emotion) => {
@@ -298,6 +299,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
                     autoBloom={true}
                     onClick={() => handleFlowerClick(flower)}
                     hasMemory={true}
+                    userData={{ isLotus: true, flowerData: flower }}
                 />
             ))}
 
@@ -324,6 +326,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
                                     autoBloom={true}
                                     onClick={() => handleFlowerClick(flower)}
                                     hasMemory={!!flower.memory}
+                                    userData={{ isFlower: true, flowerData: flower }}
                                 />
                             );
                         })}
