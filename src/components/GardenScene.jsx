@@ -207,7 +207,8 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
         }
     }, [clusters, setClusters]);
 
-const handleFlowerClick = (flower) => {
+    const handleFlowerClick = (e,flower) => {
+        e.stopPropagation();
         if (!selectedFlower && flower && flower.memory) {
             setSelectedFlower(flower);
             const hologramDistance = 3; // How far from the camera it should appear
@@ -224,10 +225,10 @@ const handleFlowerClick = (flower) => {
     };
 ;
 
-const handleHologramClose = () => {
-    setSelectedFlower(null); // Clear the selected flower
-    setHologramTransform({ position: null });
-    setPlayerControlsActive(true); // Re-enable movement
+    const handleHologramClose = () => {
+        setSelectedFlower(null); // Clear the selected flower
+        setHologramTransform({ position: null });
+        setPlayerControlsActive(true); // Re-enable movement
 };
 
 
