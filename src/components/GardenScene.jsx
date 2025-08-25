@@ -26,6 +26,8 @@ const flowerModelData = {
     "white_flower_optimized.glb": { path: "/models/white_flower_optimized.glb", scale: 0.5 },
     "lotus_flower_by_geometry_nodes.glb": { path: "/models/lotus_flower_by_geometry_nodes.glb", scale: 0.5 },
     "sunflower.glb": { path: "/models/sunflower.glb", scale: 0.005 },
+    "rose.glb": { path: "/models/rose-optimized.glb", scale: 1.0 }, 
+
     // Add any other models you have here
 };
 const defaultModel = { path: "/models/flower_optimized.glb", scale: 1.5 };
