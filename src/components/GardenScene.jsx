@@ -13,7 +13,7 @@ import { createClusters } from "../utils/clusterUtils";
 import HologramScreen from "./HologramScreen";
 import PlayerControls from "./PlayerControls";
 import { useAppStore } from '../state/store';
-
+import './App.css';
 
 // 🌸 Flower models
 // 🌸 Flower models - UPDATED WITH OPTIMIZED PATHS
@@ -133,7 +133,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
                 id: memory.id,
                 memory: memory,
             }));
-            const positionedLotus = generateLotusFlowers(formattedLotus);
+            const positionedLotus = generateLotusFlowers(memoriesWithLotus);
                 
                 setFlowers(formattedFlowers);
             setLotusFlowers(positionedLotus);

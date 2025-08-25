@@ -7,7 +7,7 @@ import MiniMapDrawer from "./components/MiniMapDrawer";
 import SearchDrawer from "./components/SearchDrawer";
 import { useAppStore } from "./state/store";
 import CompassDrawer from "./components/CompassDrawer";
-
+import './App.css';
 // CameraTracker component to update camera position in state
 function CameraTracker() {
   const { camera } = useThree();
