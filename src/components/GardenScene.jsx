@@ -41,22 +41,39 @@ const SPACING_Z = 6;
 const BLOOM_DISTANCE = 50;
 
 const keyForCell = (x, z) => `${x}|${z}`;
-const generateLotusFlowers = () => {
-    const lotusFlowers = [];
-    const pondCenter = [15, 0, 15];
-    const pondRadius = 4;
-    const lotusCount = 5;
+// src/components/GardenScene.jsx
 
-    for (let i = 0; i < lotusCount; i++) {
-        const angle = (i / lotusCount) * Math.PI * 2;
+const generateLotusFlowers = (memories) => {
+    const lotusMemories = memories.filter(m => m.memory.model_path === "lotus_flower_by_geometry_nodes.glb");
+    if (lotusMemories.length === 0) {
+        return [];
+    }
+
+    const lotusFlowers = [];
+    const pondCenter = [15, 0, 15]; 
+    const pondRadius = 4; 
+
+    lotusMemories.forEach((memory, i) => {
+        // Distribute flowers evenly in a circle
+        const angle = (i / lotusMemories.length) * Math.PI * 2;
+        // Randomize the distance from the center for a more natural look
         const radius = pondRadius * (0.4 + Math.random() * 0.6);
         const x = pondCenter[0] + radius * Math.cos(angle);
         const z = pondCenter[2] + radius * Math.sin(angle);
-        lotusFlowers.push({ position: [x, 0, z], modelPath: lotusModel, scale: 0.6 });
-    }
+
+        // Use the model path from the memory data
+        const modelInfo = flowerModelData[memory.memory.model_path] || defaultModel;
+
+        lotusFlowers.push({
+            ...memory, // Spread the original memory properties
+            position: [x, 0, z],
+            modelPath: modelInfo.path,
+            scale: modelInfo.scale, // Use scale from your central config
+        });
+    });
+
     return lotusFlowers;
 };
-
 const params = new URLSearchParams(window.location.search);
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 const API_ENDPOINT = `${API_BASE}/memories`;
