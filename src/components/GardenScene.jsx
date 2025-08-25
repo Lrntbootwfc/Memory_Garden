@@ -13,7 +13,7 @@ import { createClusters } from "../utils/clusterUtils";
 import HologramScreen from "./HologramScreen";
 import PlayerControls from "./PlayerControls";
 import { useAppStore } from '../state/store';
-import './App.css';
+import '../App.css';
 
 // 🌸 Flower models
 // 🌸 Flower models - UPDATED WITH OPTIMIZED PATHS
