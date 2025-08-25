@@ -45,36 +45,39 @@ const BLOOM_DISTANCE = 50;
 const keyForCell = (x, z) => `${x}|${z}`;
 // src/components/GardenScene.jsx
 
-const generateLotusFlowers = (memories) => {
-    const lotusMemories = memories.filter(m => m.memory.model_path === "lotus_flower_by_geometry_nodes.glb");
-    if (lotusMemories.length === 0) {
+// src/components/GardenScene.jsx
+
+const generateLotusFlowers = (lotusMemories) => {
+    // This function now receives the already-filtered lotus memories
+    if (!lotusMemories || lotusMemories.length === 0) {
         return [];
     }
 
-    const lotusFlowers = [];
+    const positionedFlowers = [];
     const pondCenter = [15, 0, 15]; 
     const pondRadius = 4; 
 
     lotusMemories.forEach((memory, i) => {
-        // Distribute flowers evenly in a circle
         const angle = (i / lotusMemories.length) * Math.PI * 2;
-        // Randomize the distance from the center for a more natural look
         const radius = pondRadius * (0.4 + Math.random() * 0.6);
         const x = pondCenter[0] + radius * Math.cos(angle);
         const z = pondCenter[2] + radius * Math.sin(angle);
+        
+        // Use the model path directly from the memory data
+        const modelInfo = flowerModelData[memory.model_path] || defaultModel;
 
-        // Use the model path from the memory data
-        const modelInfo = flowerModelData[memory.memory.model_path] || defaultModel;
-
-        lotusFlowers.push({
-            ...memory, // Spread the original memory properties
+        positionedFlowers.push({
+            // Nest the original memory data inside a 'memory' property
+            // This ensures its structure matches the other flowers
+            memory: memory, 
+            id: memory.id,
             position: [x, 0, z],
             modelPath: modelInfo.path,
-            scale: modelInfo.scale, // Use scale from your central config
+            scale: modelInfo.scale,
         });
     });
 
-    return lotusFlowers;
+    return positionedFlowers;
 };
 const params = new URLSearchParams(window.location.search);
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
@@ -86,12 +89,12 @@ const FALLBACK_USER_ID = 2;
 const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLocked, setIsControlsLocked }) => {
     const [flowers, setFlowers] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    const [lotusFlowers, setLotusFlowers] = useState([]);
     const { camera, scene, raycaster } = useThree();
     const grassTexture = useTexture("/textures/grass.jpeg");
     grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
     grassTexture.repeat.set(10, 10);
-    const lotusFlowers = useMemo(() => generateLotusFlowers(), []);
+    // const lotusFlowers = useMemo(() => generateLotusFlowers(), []);
     
     const setClusters = useAppStore((state) => state.setClusters);
     
@@ -105,15 +108,35 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
                 const response = await fetch(`${API_ENDPOINT}?user_id=${userId}`);
                 if (!response.ok) throw new Error("Network response was not ok");
                 const rawMemories = await response.json();
-                const formattedFlowers = rawMemories.map(memory => ({
+                const memoriesWithLotus = [];
+                const memoriesWithoutLotus = [];
+
+                rawMemories.forEach(memory => {
+                if (memory.model_path === "lotus_flower_by_geometry_nodes.glb") {
+                    memoriesWithLotus.push(memory);
+                } else {
+                    memoriesWithoutLotus.push(memory);
+                }
+            });
+
+
+
+                const formattedFlowers = memoriesWithoutLotus.map(memory => ({
                     id: memory.id,
                     position: [0, 0, 0], // Add the required 'position' property. It gets overwritten by clustering later.
                     memory: memory,      // Nest the original memory data inside a 'memory' property.
                     date: memory.created_at.split("T")[0],
                     emotion: memory.emotion,
                 }));
+
+                const formattedLotus = memoriesWithLotus.map(memory => ({
+                id: memory.id,
+                memory: memory,
+            }));
+            const positionedLotus = generateLotusFlowers(formattedLotus);
                 
-                setFlowers(formattedFlowers); // Set the correctly formatted data to the state.
+                setFlowers(formattedFlowers);
+            setLotusFlowers(positionedLotus);
             } catch (error) {
                 console.error("Failed to fetch flowers:", error);
             } finally {
@@ -273,7 +296,8 @@ useEffect(() => {
                     modelPath={flower.modelPath}
                     targetHeight={flower.scale}
                     autoBloom={true}
-                    hasMemory={false}
+                    onClick={() => handleFlowerClick(flower)}
+                    hasMemory={true}
                 />
             ))}
 
