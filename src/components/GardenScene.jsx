@@ -230,53 +230,48 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
 
     // src/components/GardenScene.jsx
 
-    useEffect(() => {
-        const handleMouseDown = (event) => {
-            // We no longer need to check if the controls are locked.
-            // This makes clicking feel much more natural.
+    // src/components/GardenScene.jsx
 
-            // Convert the mouse click position to normalized device coordinates (-1 to +1)
-            const pointer = new THREE.Vector2();
-            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-            pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+useEffect(() => {
+    const handleMouseDown = (event) => {
+        // Stop the default browser action to prevent unwanted behavior
+        event.preventDefault();
 
-            // Update the raycaster to shoot a ray from the camera through the mouse pointer
-            raycaster.setFromCamera(pointer, camera);
+        const pointer = new THREE.Vector2();
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-            // Get a list of all potential flower objects we've tagged in the scene
-            const allFlowerObjects = scene.children.filter(
-                (obj) => obj.userData.isFlower || obj.userData.isLotus
-            );
+        raycaster.setFromCamera(pointer, camera);
 
-            const intersects = raycaster.intersectObjects(allFlowerObjects, true);
+        // Raycast against all objects in the scene, recursively
+        const intersects = raycaster.intersectObjects(scene.children, true);
 
-            if (intersects.length > 0) {
-                // The first object in the list is the closest one we clicked on
-                const clickedObject = intersects[0].object;
-
-                // Traverse up the object's parents to find the main flower group
-                // that holds our custom data
-                let flowerParent = clickedObject.parent;
-                while (flowerParent && !flowerParent.userData.flowerData) {
-                    flowerParent = flowerParent.parent;
+        // Find the first intersected object that is part of a flower
+        for (const intersect of intersects) {
+            let object = intersect.object;
+            
+            // Traverse up the scene graph from the clicked object
+            while (object) {
+                // Check if the current object has our custom flower data
+                if (object.userData.flowerData) {
+                    // We found it! Trigger the hologram and stop searching.
+                    handleFlowerClick(object.userData.flowerData);
+                    return; // Exit the loop and function
                 }
-
-                // If we found the flower data, trigger the hologram!
-                if (flowerParent && flowerParent.userData.flowerData) {
-                    handleFlowerClick(flowerParent.userData.flowerData);
-                }
+                object = object.parent; // Move up to the next parent
             }
-        };
+        }
+    };
 
-        window.addEventListener('mousedown', handleMouseDown);
-        return () => window.removeEventListener('mousedown', handleMouseDown);
-    }, [raycaster, camera, scene, clusters, lotusFlowers]); // Add lotusFlowers to the dependency array
+    // Use the canvas element for event listening for better reliability
+    const canvas = document.querySelector('canvas');
+    canvas.addEventListener('mousedown', handleMouseDown);
 
+    return () => {
+        canvas.removeEventListener('mousedown', handleMouseDown);
+    };
+}, [raycaster, camera, scene, clusters, lotusFlowers]); 
 
-    // const getFlowerModelPath = (emotion) => {
-    //     const modelIndex = emotion ? (emotion.length % flowerModels.length) : 0;
-    //     return flowerModels[modelIndex];
-    // };
 
     return (
         <>
