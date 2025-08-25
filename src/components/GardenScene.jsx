@@ -26,7 +26,7 @@ const flowerModelData = {
     "white_flower_optimized.glb": { path: "/models/white_flower_optimized.glb", scale: 0.5 },
     "lotus_flower_by_geometry_nodes.glb": { path: "/models/lotus_flower_by_geometry_nodes.glb", scale: 0.5 },
     "sunflower.glb": { path: "/models/sunflower.glb", scale: 0.005 },
-    "rose.glb": { path: "/models/rose.glb", scale: 1.0 }, 
+    "rose.glb": { path: "/models/rose.glb", scale: 1.0 },
 
     // Add any other models you have here
 };
@@ -54,22 +54,22 @@ const generateLotusFlowers = (lotusMemories) => {
     }
 
     const positionedFlowers = [];
-    const pondCenter = [15, 0, 15]; 
-    const pondRadius = 4; 
+    const pondCenter = [15, 0, 15];
+    const pondRadius = 4;
 
     lotusMemories.forEach((memory, i) => {
         const angle = (i / lotusMemories.length) * Math.PI * 2;
         const radius = pondRadius * (0.4 + Math.random() * 0.6);
         const x = pondCenter[0] + radius * Math.cos(angle);
         const z = pondCenter[2] + radius * Math.sin(angle);
-        
+
         // Use the model path directly from the memory data
         const modelInfo = flowerModelData[memory.model_path] || defaultModel;
 
         positionedFlowers.push({
             // Nest the original memory data inside a 'memory' property
             // This ensures its structure matches the other flowers
-            memory: memory, 
+            memory: memory,
             id: memory.id,
             position: [x, 0, z],
             modelPath: modelInfo.path,
@@ -84,7 +84,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api
 const API_ENDPOINT = `${API_BASE}/memories`;
 const PARAM_USER_ID = params.get("user_id");
 const RUNTIME_USER_ID = window.memoryscape_user_id;
-const FALLBACK_USER_ID = 2; 
+const FALLBACK_USER_ID = 2;
 
 const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLocked, setIsControlsLocked }) => {
     const [flowers, setFlowers] = useState([]);
@@ -95,9 +95,9 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
     grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
     grassTexture.repeat.set(10, 10);
     // const lotusFlowers = useMemo(() => generateLotusFlowers(), []);
-    
+
     const setClusters = useAppStore((state) => state.setClusters);
-    
+
     const playerControlsRef = useRef();
     const [playerControlsActive, setPlayerControlsActive] = useState(true);
     useEffect(() => {
@@ -112,12 +112,12 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
                 const memoriesWithoutLotus = [];
 
                 rawMemories.forEach(memory => {
-                if (memory.model_path === "lotus_flower_by_geometry_nodes.glb") {
-                    memoriesWithLotus.push(memory);
-                } else {
-                    memoriesWithoutLotus.push(memory);
-                }
-            });
+                    if (memory.model_path === "lotus_flower_by_geometry_nodes.glb") {
+                        memoriesWithLotus.push(memory);
+                    } else {
+                        memoriesWithoutLotus.push(memory);
+                    }
+                });
 
 
 
@@ -130,13 +130,13 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
                 }));
 
                 const formattedLotus = memoriesWithLotus.map(memory => ({
-                id: memory.id,
-                memory: memory,
-            }));
-            const positionedLotus = generateLotusFlowers(memoriesWithLotus);
-                
+                    id: memory.id,
+                    memory: memory,
+                }));
+                const positionedLotus = generateLotusFlowers(memoriesWithLotus);
+
                 setFlowers(formattedFlowers);
-            setLotusFlowers(positionedLotus);
+                setLotusFlowers(positionedLotus);
             } catch (error) {
                 console.error("Failed to fetch flowers:", error);
             } finally {
@@ -144,9 +144,9 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
             }
         };
         fetchFlowers();
-    }, []); 
+    }, []);
 
-// const clusters = useMemo(() => createClusters(flowers, "date"), [flowers]);
+    // const clusters = useMemo(() => createClusters(flowers, "date"), [flowers]);
     const clusters = useMemo(() => {
         const rawClusters = createClusters(flowers, "date");
         const positionedClusters = [];
@@ -202,11 +202,11 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
     }, [flowers]);
 
     useEffect(() => {
-    // This check prevents errors if the store is not ready
-    if (typeof setClusters === 'function') {
-        setClusters(clusters);
-    }
-}, [clusters, setClusters]);
+        // This check prevents errors if the store is not ready
+        if (typeof setClusters === 'function') {
+            setClusters(clusters);
+        }
+    }, [clusters, setClusters]);
 
     const [selectedFlower, setSelectedFlower] = useState(null);
 
@@ -228,7 +228,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
         scene.fog = new THREE.FogExp2("#87CEEB", 0.0008);
     }, [scene]);
 
-useEffect(() => {
+    useEffect(() => {
         const handleMouseDown = () => {
             // Only raycast if the player controls exist and are locked
             if (!playerControlsRef.current?.isLocked) return;
@@ -312,7 +312,7 @@ useEffect(() => {
                             // This function now returns an object like { path: "...", scale: 0.2 }
                             // const flowerModel = getFlowerModelPath(flower.emotion); 
                             const modelInfo = flowerModelData[flower.memory.model_path] || defaultModel;
-                            
+
                             return (
                                 <Flower
                                     key={`flower-${idx}-${fIdx}`}
@@ -330,7 +330,7 @@ useEffect(() => {
 
 
 
-                        
+
                         <DisplayCard
                             pointerEvents="none"
                             clusterPosition={cluster.centerPosition}
@@ -343,7 +343,7 @@ useEffect(() => {
                 ))
             )}
 
-            {selectedFlower &&  selectedFlower.media_path &&(
+            {selectedFlower && selectedFlower.memory && selectedFlower.memory.media_path && (
                 <HologramScreen
                     position={selectedFlower.position}
                     memoryData={selectedFlower.memory}
