@@ -121,30 +121,36 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
                 style={{
                     pointerEvents: 'auto',
                     zIndex: 1000,
-                    backgroundColor: 'rgba(0, 100, 200, 0.2)', // Blue background
-                    backdropFilter: 'blur(2px)',
-                    border: '1px solid rgba(0, 170, 255, 0.3)',
-                    borderRadius: '10px',
-                    padding: '20px',
-                    maxWidth: '400px',
-                    maxHeight: '300px',
-                    overflow: 'auto',
-                    boxShadow: '0 0 20px rgba(0, 170, 255, 0.2)'
+                    backgroundColor: 'transparent',
+                    padding: '0',
+                    margin: '0',
+                    width: '400px',
+                    height: '300px',
+                    position: 'relative'
                 }}
             >
-                <div className="memory-card">
+                <div className="memory-card" style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    position: 'relative',
+                    padding: '0',
+                    margin: '0'
+                }}>
                     {/* --- FIX: Render media using the corrected `fullMediaPath` --- */}
                     {fullMediaPath && (
                         <div className="media-container" style={{ 
-                            marginBottom: '15px'
+                            width: '100%',
+                            height: '100%',
+                            position: 'relative'
                         }}>
                             {media_type === 'image' && <img 
                                 src={fullMediaPath} 
                                 alt="" 
                                 style={{ 
-                                    maxWidth: '100%', 
-                                    height: 'auto',
-                                    borderRadius: '5px'
+                                    width: '100%', 
+                                    height: '100%',
+                                    objectFit: 'contain',
+                                    display: 'block'
                                 }} 
                             />}
                             {media_type === 'video' && <video 
@@ -154,9 +160,9 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
                                 loop 
                                 muted 
                                 style={{ 
-                                    maxWidth: '100%', 
-                                    height: 'auto',
-                                    borderRadius: '5px'
+                                    width: '100%', 
+                                    height: '100%',
+                                    objectFit: 'cover'
                                 }} 
                             />}
                             {media_type === 'audio' && <audio 
@@ -165,7 +171,11 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
                                 autoPlay 
                                 loop 
                                 style={{ 
-                                    width: '100%'
+                                    width: '100%',
+                                    height: '50px',
+                                    position: 'absolute',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)'
                                 }} 
                             />}
                         </div>
@@ -175,28 +185,28 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
                         onClick={onClose} 
                         className="close-button"
                         style={{
-                            backgroundColor: 'rgba(0, 120, 255, 0.3)',
-                            color: '#0088ff',
-                            border: '1px solid #0088ff',
-                            padding: '10px 20px',
-                            borderRadius: '5px',
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '8px 12px',
+                            borderRadius: '50%',
                             cursor: 'pointer',
-                            fontSize: '14px',
-                            fontFamily: 'monospace',
-                            textShadow: '0 0 5px #0088ff',
-                            backdropFilter: 'blur(2px)',
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            zIndex: 1000,
                             transition: 'all 0.3s ease'
                         }}
                         onMouseOver={(e) => {
-                            e.target.style.backgroundColor = 'rgba(0, 120, 255, 0.5)';
-                            e.target.style.boxShadow = '0 0 15px rgba(0, 120, 255, 0.5)';
+                            e.target.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
                         }}
                         onMouseOut={(e) => {
-                            e.target.style.backgroundColor = 'rgba(0, 120, 255, 0.3)';
-                            e.target.style.boxShadow = 'none';
+                            e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
                         }}
                     >
-                        Close
+                        ×
                     </button>
                 </div>
             </Html>
