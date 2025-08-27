@@ -10,9 +10,10 @@ const API_ROOT = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/ap
 const HologramScreen = ({ position, memoryData, onClose }) => {
     const { camera } = useThree();
     const groupRef = useRef();
-    const { media_path, media_type, title, description } = memoryData;
+    const memory = memoryData.memory || memoryData;
+    const { media_path, media_type, title, description } = memory;
 
-    // --- FIX: Create a full, absolute URL for the media content ---
+    // --- FIX: Create a full, absolute URL for the media cont
     const fullMediaPath = media_path ? `${API_ROOT}${media_path}` : null;
 
     const { opacity, scale } = useSpring({
