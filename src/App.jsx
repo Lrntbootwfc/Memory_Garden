@@ -103,9 +103,13 @@ function App() {
           className="px-4 py-2 rounded-md bg-white/80 hover:bg-white/100 text-black font-semibold shadow-lg"
           onClick={() => {
             const canvas = document.querySelector("canvas");
-            if (canvas) {
-              canvas.requestPointerLock();
-              setIsControlsLocked(true);
+            if (canvas && !document.pointerLockElement) {
+              try {
+                canvas.requestPointerLock();
+                setIsControlsLocked(true);
+              } catch (error) {
+                console.warn('Pointer lock request failed:', error);
+              }
             }
           }}
         >

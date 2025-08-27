@@ -62,13 +62,15 @@ const Flower = ({
   const handleFlowerClick = (e) => {
     // Stop the event propagation so it doesn't affect other elements
     e.stopPropagation();
+    console.log('Flower mesh clicked, hasMemory:', hasMemory); // Debug log
 
     // Call the local bloom function first
     setBlooming(true);
 
-    // Then, if the onClick prop exists, call it.
+    // Then, if the onClick prop exists, call it with the flower data
     if (onClick) {
-      onClick();
+      // Pass the flower data from props
+      onClick(props);
     }
   };
 

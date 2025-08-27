@@ -26,15 +26,25 @@ const PlayerControls = forwardRef(({ active = true }, ref) => {
 
     // Expose the unlock function to the parent component.
     useImperativeHandle(ref, () => ({
-        unlock: () => document.exitPointerLock(),
+        unlock: () => {
+            if (document.pointerLockElement) {
+                document.exitPointerLock();
+            }
+        },
+        isLocked: () => !!document.pointerLockElement,
     }));
 
     // 🌸 2. PROGRAMMATIC LOCKING
     // This effect handles locking the controls. It only runs when the 'active' prop is true.
     useEffect(() => {
-        const handleCanvasClick = () => {
-            if (active && pointerLockControlsRef.current) {
-                pointerLockControlsRef.current.lock();
+        const handleCanvasClick = (e) => {
+            // Only lock if we're not clicking on a 3D object and not already locked
+            if (active && pointerLockControlsRef.current && !document.pointerLockElement && !e.target.closest('.hologram-content')) {
+                try {
+                    pointerLockControlsRef.current.lock();
+                } catch (error) {
+                    console.warn('Pointer lock failed:', error);
+                }
             }
         };
         // We listen for clicks on the canvas element itself.

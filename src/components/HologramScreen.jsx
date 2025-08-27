@@ -32,15 +32,25 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
 
     return (
         <animated.group ref={groupRef} position={position} scale={scale}>
-            {/* Transparent background plane */}
+            {/* Enhanced background plane with better visibility */}
             <Plane args={[4.2, 2.7]}>
                 <animated.meshStandardMaterial
                     color="#0077ff"
-                    opacity={opacity.to(o => o * 0.25)} // Make background more subtle
+                    opacity={opacity.to(o => o * 0.4)} // Increased opacity for better visibility
                     transparent={true}
                     side={THREE.DoubleSide}
                     emissive="#00aaff"
-                    emissiveIntensity={0.3}
+                    emissiveIntensity={0.5} // Increased emissive intensity
+                />
+            </Plane>
+
+            {/* Border frame for better definition */}
+            <Plane args={[4.4, 2.9]} position={[0, 0, -0.001]}>
+                <animated.meshBasicMaterial
+                    color="#ffffff"
+                    opacity={opacity.to(o => o * 0.8)}
+                    transparent={true}
+                    side={THREE.DoubleSide}
                 />
             </Plane>
 
@@ -49,24 +59,49 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
                 center
                 transform
                 position={[0, 0, 0.01]} // Slightly in front of the plane
-                occlude
+                occlude={false} // Disable occlusion for better visibility
                 className="hologram-content"
                 onPointerDown={handleContentClick}
+                style={{
+                    pointerEvents: 'auto',
+                    zIndex: 1000,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    borderRadius: '10px',
+                    padding: '20px',
+                    color: 'white',
+                    maxWidth: '400px',
+                    maxHeight: '300px',
+                    overflow: 'auto'
+                }}
             >
                 <div className="memory-card">
-                    <h3>{title}</h3>
-                    <p>{description}</p>
+                    <h3 style={{ color: '#00aaff', marginBottom: '10px' }}>{title}</h3>
+                    <p style={{ marginBottom: '15px' }}>{description}</p>
 
                     {/* --- FIX: Render media using the corrected `fullMediaPath` --- */}
                     {fullMediaPath && (
-                        <div className="media-container">
-                            {media_type === 'image' && <img src={fullMediaPath} alt={title} />}
-                            {media_type === 'video' && <video src={fullMediaPath} controls autoPlay loop muted />}
-                            {media_type === 'audio' && <audio src={fullMediaPath} controls autoPlay loop />}
+                        <div className="media-container" style={{ marginBottom: '15px' }}>
+                            {media_type === 'image' && <img src={fullMediaPath} alt={title} style={{ maxWidth: '100%', height: 'auto' }} />}
+                            {media_type === 'video' && <video src={fullMediaPath} controls autoPlay loop muted style={{ maxWidth: '100%', height: 'auto' }} />}
+                            {media_type === 'audio' && <audio src={fullMediaPath} controls autoPlay loop style={{ width: '100%' }} />}
                         </div>
                     )}
 
-                    <button onClick={onClose} className="close-button">Close</button>
+                    <button 
+                        onClick={onClose} 
+                        className="close-button"
+                        style={{
+                            backgroundColor: '#ff4444',
+                            color: 'white',
+                            border: 'none',
+                            padding: '10px 20px',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                        }}
+                    >
+                        Close
+                    </button>
                 </div>
             </Html>
         </animated.group>

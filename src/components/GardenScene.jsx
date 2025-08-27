@@ -12,6 +12,9 @@ import DisplayCard from "./DisplayCard";
 import { createClusters } from "../utils/clusterUtils";
 import HologramScreen from "./HologramScreen";
 import PlayerControls from "./PlayerControls";
+import SimpleGarden from "./SimpleGarden";
+import GardenPaths from "./GardenPaths";
+import GardenFence from "./GardenFence";
 import { useAppStore } from '../state/store';
 import '../App.css';
 
@@ -207,9 +210,10 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
         }
     }, [clusters, setClusters]);
 
-    const handleFlowerClick = (e,flower) => {
-        e.stopPropagation();
+    const handleFlowerClick = (flower) => {
+        console.log('Flower clicked:', flower); // Debug log
         if (!selectedFlower && flower && flower.memory) {
+            console.log('Setting selected flower and showing hologram'); // Debug log
             setSelectedFlower(flower);
             const hologramDistance = 3; // How far from the camera it should appear
             const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
@@ -217,8 +221,9 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
             
             setHologramTransform({ position });
             
+            // Temporarily disable controls to allow interaction with hologram
             setPlayerControlsActive(false);
-            if (playerControlsRef.current?.isLocked) {
+            if (playerControlsRef.current?.isLocked()) {
                 playerControlsRef.current.unlock();
             }
         }
@@ -243,6 +248,12 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
 
             <InfiniteGround grassTexture={grassTexture} />
 
+            {/* Simple garden decorations - no external models needed! */}
+            <SimpleGarden />
+            <GardenPaths />
+            <GardenFence />
+
+            {/* Pond for lotus flowers */}
             <mesh position={[15, 0, 15]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
                 <circleGeometry args={[4, 64]} />
                 <meshStandardMaterial color="#4DA6FF" transparent opacity={0.5} roughness={0.2} metalness={0.1} />
