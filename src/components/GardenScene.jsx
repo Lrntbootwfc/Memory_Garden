@@ -223,7 +223,7 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
             }
         }
     };
-;
+
 
     const handleHologramClose = () => {
         setSelectedFlower(null); // Clear the selected flower
