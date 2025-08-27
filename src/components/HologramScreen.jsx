@@ -33,29 +33,84 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
 
     return (
         <animated.group ref={groupRef} position={position} scale={scale}>
-            {/* Enhanced background plane with better visibility */}
+            {/* Main hologram plane - translucent with holographic effect */}
             <Plane args={[4.2, 2.7]}>
                 <animated.meshStandardMaterial
-                    color="#0077ff"
-                    opacity={opacity.to(o => o * 0.4)} // Increased opacity for better visibility
+                    color="#00ffff"
+                    opacity={opacity.to(o => o * 0.15)} // Much more translucent
                     transparent={true}
                     side={THREE.DoubleSide}
                     emissive="#00aaff"
-                    emissiveIntensity={0.5} // Increased emissive intensity
+                    emissiveIntensity={0.3}
+                    roughness={0.1}
+                    metalness={0.8}
                 />
             </Plane>
 
-            {/* Border frame for better definition */}
+            {/* Holographic scan lines effect */}
+            <Plane args={[4.2, 0.05]} position={[0, 1, 0.002]}>
+                <animated.meshBasicMaterial
+                    color="#00ffff"
+                    opacity={opacity.to(o => o * 0.6)}
+                    transparent={true}
+                />
+            </Plane>
+            <Plane args={[4.2, 0.05]} position={[0, 0, 0.002]}>
+                <animated.meshBasicMaterial
+                    color="#00ffff"
+                    opacity={opacity.to(o => o * 0.4)}
+                    transparent={true}
+                />
+            </Plane>
+            <Plane args={[4.2, 0.05]} position={[0, -1, 0.002]}>
+                <animated.meshBasicMaterial
+                    color="#00ffff"
+                    opacity={opacity.to(o => o * 0.6)}
+                    transparent={true}
+                />
+            </Plane>
+
+            {/* Subtle border glow effect */}
             <Plane args={[4.4, 2.9]} position={[0, 0, -0.001]}>
+                <animated.meshBasicMaterial
+                    color="#00aaff"
+                    opacity={opacity.to(o => o * 0.2)}
+                    transparent={true}
+                    side={THREE.DoubleSide}
+                />
+            </Plane>
+
+            {/* Corner markers for holographic authenticity */}
+            <Plane args={[0.3, 0.05]} position={[-2, 1.3, 0.003]}>
                 <animated.meshBasicMaterial
                     color="#ffffff"
                     opacity={opacity.to(o => o * 0.8)}
                     transparent={true}
-                    side={THREE.DoubleSide}
+                />
+            </Plane>
+            <Plane args={[0.05, 0.3]} position={[-2, 1.3, 0.003]}>
+                <animated.meshBasicMaterial
+                    color="#ffffff"
+                    opacity={opacity.to(o => o * 0.8)}
+                    transparent={true}
+                />
+            </Plane>
+            <Plane args={[0.3, 0.05]} position={[2, 1.3, 0.003]}>
+                <animated.meshBasicMaterial
+                    color="#ffffff"
+                    opacity={opacity.to(o => o * 0.8)}
+                    transparent={true}
+                />
+            </Plane>
+            <Plane args={[0.05, 0.3]} position={[2, 1.3, 0.003]}>
+                <animated.meshBasicMaterial
+                    color="#ffffff"
+                    opacity={opacity.to(o => o * 0.8)}
+                    transparent={true}
                 />
             </Plane>
 
-            {/* HTML content projected onto the plane */}
+            {/* HTML content with holographic styling */}
             <Html
                 center
                 transform
@@ -66,25 +121,53 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
                 style={{
                     pointerEvents: 'auto',
                     zIndex: 1000,
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    backgroundColor: 'rgba(0, 100, 200, 0.2)', // Blue background
+                    backdropFilter: 'blur(2px)',
+                    border: '1px solid rgba(0, 170, 255, 0.3)',
                     borderRadius: '10px',
                     padding: '20px',
-                    color: 'white',
                     maxWidth: '400px',
                     maxHeight: '300px',
-                    overflow: 'auto'
+                    overflow: 'auto',
+                    boxShadow: '0 0 20px rgba(0, 170, 255, 0.2)'
                 }}
             >
                 <div className="memory-card">
-                    <h3 style={{ color: '#00aaff', marginBottom: '10px' }}>{title}</h3>
-                    <p style={{ marginBottom: '15px' }}>{description}</p>
-
                     {/* --- FIX: Render media using the corrected `fullMediaPath` --- */}
                     {fullMediaPath && (
-                        <div className="media-container" style={{ marginBottom: '15px' }}>
-                            {media_type === 'image' && <img src={fullMediaPath} alt={title} style={{ maxWidth: '100%', height: 'auto' }} />}
-                            {media_type === 'video' && <video src={fullMediaPath} controls autoPlay loop muted style={{ maxWidth: '100%', height: 'auto' }} />}
-                            {media_type === 'audio' && <audio src={fullMediaPath} controls autoPlay loop style={{ width: '100%' }} />}
+                        <div className="media-container" style={{ 
+                            marginBottom: '15px'
+                        }}>
+                            {media_type === 'image' && <img 
+                                src={fullMediaPath} 
+                                alt="" 
+                                style={{ 
+                                    maxWidth: '100%', 
+                                    height: 'auto',
+                                    borderRadius: '5px'
+                                }} 
+                            />}
+                            {media_type === 'video' && <video 
+                                src={fullMediaPath} 
+                                controls 
+                                autoPlay 
+                                loop 
+                                muted 
+                                style={{ 
+                                    maxWidth: '100%', 
+                                    height: 'auto',
+                                    borderRadius: '5px'
+                                }} 
+                            />}
+                            {media_type === 'audio' && <audio 
+                                src={fullMediaPath} 
+                                controls 
+                                autoPlay 
+                                loop 
+                                style={{ 
+                                    width: '100%'
+                                }} 
+                            />}
                         </div>
                     )}
 
@@ -92,13 +175,25 @@ const HologramScreen = ({ position, memoryData, onClose }) => {
                         onClick={onClose} 
                         className="close-button"
                         style={{
-                            backgroundColor: '#ff4444',
-                            color: 'white',
-                            border: 'none',
+                            backgroundColor: 'rgba(0, 120, 255, 0.3)',
+                            color: '#0088ff',
+                            border: '1px solid #0088ff',
                             padding: '10px 20px',
                             borderRadius: '5px',
                             cursor: 'pointer',
-                            fontSize: '14px'
+                            fontSize: '14px',
+                            fontFamily: 'monospace',
+                            textShadow: '0 0 5px #0088ff',
+                            backdropFilter: 'blur(2px)',
+                            transition: 'all 0.3s ease'
+                        }}
+                        onMouseOver={(e) => {
+                            e.target.style.backgroundColor = 'rgba(0, 120, 255, 0.5)';
+                            e.target.style.boxShadow = '0 0 15px rgba(0, 120, 255, 0.5)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.target.style.backgroundColor = 'rgba(0, 120, 255, 0.3)';
+                            e.target.style.boxShadow = 'none';
                         }}
                     >
                         Close
