@@ -12,9 +12,9 @@ import DisplayCard from "./DisplayCard";
 import { createClusters } from "../utils/clusterUtils";
 import HologramScreen from "./HologramScreen";
 import PlayerControls from "./PlayerControls";
-import SimpleGarden from "./SimpleGarden";
-import GardenPaths from "./GardenPaths";
-import GardenFence from "./GardenFence";
+// import SimpleGarden from "./SimpleGarden";
+// import GardenPaths from "./GardenPaths";
+// import GardenFence from "./GardenFence";
 import { useAppStore } from '../state/store';
 import '../App.css';
 
@@ -249,9 +249,9 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
             <InfiniteGround grassTexture={grassTexture} />
 
             {/* Simple garden decorations - no external models needed! */}
-            <SimpleGarden />
+            {/* <SimpleGarden />
             <GardenPaths />
-            <GardenFence />
+            <GardenFence /> */}
 
             {/* Pond for lotus flowers */}
             <mesh position={[15, 0, 15]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
