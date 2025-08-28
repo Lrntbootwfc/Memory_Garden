@@ -39,9 +39,9 @@ const lotusModel = "/models/lotus_flower_by_geometry_nodes.glb";
 const gardenSize = 50;
 const spacing = 2.0;
 
-const ROWS = 11;
-const COLS = 10;
-const SPACING_X = 5;
+const COLS = 20;
+const ROWS = 15;
+const SPACING_X = 4.5; 
 const SPACING_Z = 6;
 const BLOOM_DISTANCE = 50;
 
@@ -248,10 +248,10 @@ const GardenScene = ({ grassTexturePath = "/textures/grass.jpeg", isControlsLock
 
             <InfiniteGround grassTexture={grassTexture} />
 
-            {/* Simple garden decorations - no external models needed! */}
-            {/* <SimpleGarden />
-            <GardenPaths />
-            <GardenFence /> */}
+            {/* Simple garden decorations - no external models needed! */} 
+             {/* <SimpleGarden /> */}
+            {/* <GardenPaths /> */}
+            {/* <GardenFence /> */}
 
             {/* Pond for lotus flowers */}
             <mesh position={[15, 0, 15]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
