@@ -21,7 +21,7 @@ Three.js: The core 3D library used for all rendering and scene management.
 React-Three-Fiber: A React renderer for Three.js that simplifies managing the 3D scene's state and components.
 React-Spring: For physics-based animations that give the scene a fluid, natural feel.
 
-Getting Started
+# Getting Started
 Follow these steps to get the garden running on your local machine.
 
 Prerequisites
