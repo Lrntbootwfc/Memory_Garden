@@ -1,4 +1,4 @@
-MemoryScape Garden
+# MemoryScape Garden
 A 3D Visualization of Digital Memories
 This repository contains the frontend component of the MemoryScape project, an interactive 3D garden where digital memories are brought to life. It serves as a visual and emotional interface, transforming a collection of photos and videos into a vibrant, navigable world.
 
