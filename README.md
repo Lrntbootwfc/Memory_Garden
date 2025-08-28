@@ -4,7 +4,7 @@ This repository contains the frontend component of the MemoryScape project, an i
 
 The garden is designed to feel like a living space where memories don't just exist, but grow. Every memory is rendered as a unique, interactive flower. By navigating the scene and clicking on a glowing flower, users can trigger a holographic display to view the photo or video associated with that moment.
 
-Features
+# Features
 Interactive 3D Scene: Explore a detailed 3D environment with smooth, responsive camera controls.
 
 Dynamic Object Rendering: Memories are dynamically rendered as distinct flower models.
@@ -13,15 +13,12 @@ Holographic Display System: A custom particle and shader effect creates a floati
 
 Performance-Optimized: The scene is built to render smoothly, even with a large number of objects.
 
-Technology Stack
+# Technology Stack
 The garden is built on a modern and powerful web development stack, focusing on performance and immersive visuals.
 
 React: For a structured and component-based frontend architecture.
-
 Three.js: The core 3D library used for all rendering and scene management.
-
 React-Three-Fiber: A React renderer for Three.js that simplifies managing the 3D scene's state and components.
-
 React-Spring: For physics-based animations that give the scene a fluid, natural feel.
 
 Getting Started
