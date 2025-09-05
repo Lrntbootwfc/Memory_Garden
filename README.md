@@ -49,3 +49,4 @@ npm start
 
 Contributing
 Contributions are always welcome! If you have ideas for new features, optimizations, or improvements, feel free to open an issue or submit a pull request... .. .. 
+.. 
